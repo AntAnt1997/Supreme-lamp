@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy.orm import Session
+
 from bot.database.db import get_session
 from bot.database.models import Trade, Position
 
@@ -81,12 +83,33 @@ class OrderManager:
                 self.notifier.send(f"❌ Order FAILED: {side} {amount} {symbol}\nError: {e}")
             raise
 
-        # Record trade in database
-        self._record_trade(order, symbol, side, amount, strategy, signal_id, leader_id, stop_loss, take_profit)
+        # Record trade and update position in a single DB transaction
+        session = get_session()
+        try:
+            self._record_trade(
+                session, order, symbol, side, amount, strategy,
+                signal_id, leader_id, stop_loss, take_profit,
+            )
 
-        # Update or create position
-        if order.get("status") in ("closed", "filled"):
-            self._update_position(symbol, side, amount, order, strategy, stop_loss, take_profit)
+            if order.get("status") in ("closed", "filled"):
+                pnl = self._update_position(
+                    session, symbol, side, amount, order, strategy,
+                    stop_loss, take_profit,
+                )
+                # Update the trade's PnL if a position was closed
+                if pnl is not None:
+                    trade = session.query(Trade).filter_by(
+                        order_id=order.get("id"), is_paper=self.is_paper,
+                    ).order_by(Trade.id.desc()).first()
+                    if trade:
+                        trade.pnl = pnl
+
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error("Failed to record trade/position: %s", e)
+        finally:
+            session.close()
 
         # Send notification
         if self.notifier:
@@ -109,7 +132,7 @@ class OrderManager:
         session = get_session()
         try:
             position = session.query(Position).filter_by(
-                id=position_id, is_open=True
+                id=position_id, is_open=True, is_paper=self.is_paper,
             ).first()
 
             if not position:
@@ -138,9 +161,9 @@ class OrderManager:
             position.realized_pnl = pnl
             position.current_price = fill_price
 
-            # Record the closing trade
+            # Record the closing trade in the same session/transaction
             self._record_trade(
-                order, position.symbol, close_side, position.amount,
+                session, order, position.symbol, close_side, position.amount,
                 position.strategy, pnl=pnl,
             )
 
@@ -168,6 +191,7 @@ class OrderManager:
 
     def _record_trade(
         self,
+        session: Session,
         order: dict,
         symbol: str,
         side: str,
@@ -179,39 +203,32 @@ class OrderManager:
         take_profit: Optional[float] = None,
         pnl: Optional[float] = None,
     ):
-        """Record a trade in the database."""
-        session = get_session()
-        try:
-            fee_info = order.get("fee", {})
-            trade = Trade(
-                symbol=symbol,
-                side=side,
-                order_type=order.get("type", "market"),
-                amount=amount,
-                price=order.get("price"),
-                average_price=order.get("average") or order.get("price"),
-                cost=order.get("cost"),
-                fee=fee_info.get("cost", 0) if isinstance(fee_info, dict) else 0,
-                fee_currency=fee_info.get("currency") if isinstance(fee_info, dict) else None,
-                strategy=strategy,
-                order_id=order.get("id"),
-                status=order.get("status", "filled"),
-                pnl=pnl,
-                is_paper=self.is_paper,
-                signal_id=signal_id,
-                leader_id=leader_id,
-            )
-            session.add(trade)
-            session.commit()
-            logger.debug("Trade recorded: %s", trade)
-        except Exception as e:
-            session.rollback()
-            logger.error("Failed to record trade: %s", e)
-        finally:
-            session.close()
+        """Record a trade in the database using the provided session."""
+        fee_info = order.get("fee", {})
+        trade = Trade(
+            symbol=symbol,
+            side=side,
+            order_type=order.get("type", "market"),
+            amount=amount,
+            price=order.get("price"),
+            average_price=order.get("average") or order.get("price"),
+            cost=order.get("cost"),
+            fee=fee_info.get("cost", 0) if isinstance(fee_info, dict) else 0,
+            fee_currency=fee_info.get("currency") if isinstance(fee_info, dict) else None,
+            strategy=strategy,
+            order_id=order.get("id"),
+            status=order.get("status", "filled"),
+            pnl=pnl,
+            is_paper=self.is_paper,
+            signal_id=signal_id,
+            leader_id=leader_id,
+        )
+        session.add(trade)
+        logger.debug("Trade recorded: %s", trade)
 
     def _update_position(
         self,
+        session: Session,
         symbol: str,
         side: str,
         amount: float,
@@ -219,58 +236,78 @@ class OrderManager:
         strategy: str,
         stop_loss: Optional[float],
         take_profit: Optional[float],
-    ):
-        """Update or create a position based on a filled order."""
-        session = get_session()
-        try:
-            fill_price = order.get("average") or order.get("price", 0)
-            position_side = "long" if side == "buy" else "short"
+    ) -> Optional[float]:
+        """Update or create a position based on a filled order.
 
-            # Check for existing open position
-            existing = session.query(Position).filter_by(
-                symbol=symbol, is_open=True
-            ).first()
+        Returns realized PnL if a position was closed/reduced, else None.
+        """
+        fill_price = order.get("average") or order.get("price", 0)
+        position_side = "long" if side == "buy" else "short"
+        realized_pnl = None
 
-            if existing:
-                if (existing.side == "long" and side == "sell") or \
-                   (existing.side == "short" and side == "buy"):
-                    # Closing or reducing position
-                    if amount >= existing.amount:
-                        # Full close
-                        if existing.side == "long":
-                            existing.realized_pnl = (fill_price - existing.entry_price) * existing.amount
-                        else:
-                            existing.realized_pnl = (existing.entry_price - fill_price) * existing.amount
-                        existing.is_open = False
-                        existing.closed_at = datetime.utcnow()
-                        existing.current_price = fill_price
-                    else:
-                        # Partial close
-                        existing.amount -= amount
+        # Check for existing open position scoped to current trading mode
+        existing = session.query(Position).filter_by(
+            symbol=symbol, is_open=True, is_paper=self.is_paper,
+        ).first()
+
+        if existing:
+            if (existing.side == "long" and side == "sell") or \
+               (existing.side == "short" and side == "buy"):
+                # Closing or reducing position
+                closed_amount = min(amount, existing.amount)
+
+                # Compute realized PnL for the closed portion
+                if existing.side == "long":
+                    realized_pnl = (fill_price - existing.entry_price) * closed_amount
                 else:
-                    # Adding to position - compute new average entry
-                    total_cost = (existing.entry_price * existing.amount) + (fill_price * amount)
-                    existing.amount += amount
-                    existing.entry_price = total_cost / existing.amount
-            else:
-                # New position
-                position = Position(
-                    symbol=symbol,
-                    side=position_side,
-                    entry_price=fill_price,
-                    amount=amount,
-                    current_price=fill_price,
-                    stop_loss=stop_loss,
-                    take_profit=take_profit,
-                    strategy=strategy,
-                    is_paper=self.is_paper,
-                    is_open=True,
-                )
-                session.add(position)
+                    realized_pnl = (existing.entry_price - fill_price) * closed_amount
 
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logger.error("Failed to update position: %s", e)
-        finally:
-            session.close()
+                if amount >= existing.amount:
+                    # Full close
+                    existing.realized_pnl = realized_pnl
+                    existing.is_open = False
+                    existing.closed_at = datetime.utcnow()
+                    existing.current_price = fill_price
+
+                    # Handle reversal: excess amount opens a new opposite position
+                    remainder = amount - existing.amount
+                    if remainder > 0:
+                        new_position = Position(
+                            symbol=symbol,
+                            side=position_side,
+                            entry_price=fill_price,
+                            amount=remainder,
+                            current_price=fill_price,
+                            stop_loss=stop_loss,
+                            take_profit=take_profit,
+                            strategy=strategy,
+                            is_paper=self.is_paper,
+                            is_open=True,
+                        )
+                        session.add(new_position)
+                else:
+                    # Partial close
+                    existing.amount -= closed_amount
+                    existing.current_price = fill_price
+            else:
+                # Adding to position - compute new average entry
+                total_cost = (existing.entry_price * existing.amount) + (fill_price * amount)
+                existing.amount += amount
+                existing.entry_price = total_cost / existing.amount
+        else:
+            # New position
+            position = Position(
+                symbol=symbol,
+                side=position_side,
+                entry_price=fill_price,
+                amount=amount,
+                current_price=fill_price,
+                stop_loss=stop_loss,
+                take_profit=take_profit,
+                strategy=strategy,
+                is_paper=self.is_paper,
+                is_open=True,
+            )
+            session.add(position)
+
+        return realized_pnl
