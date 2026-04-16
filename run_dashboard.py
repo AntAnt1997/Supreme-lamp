@@ -2,12 +2,16 @@
 """
 Standalone dashboard launcher.
 
-Boots a fully functional trading dashboard in paper-trading mode
-with no external dependencies (no Binance keys, no Telegram, no ccxt).
+Boots a fully functional trading dashboard in paper or live mode.
 
 Usage:
-    python run_dashboard.py              # default port 8080
-    python run_dashboard.py --port 3000  # custom port
+    python run_dashboard.py                        # paper mode (default)
+    python run_dashboard.py --mode live             # LIVE trading (real money!)
+    python run_dashboard.py --mode live --testnet   # Binance testnet
+    python run_dashboard.py --port 3000             # custom port
+
+Paper mode needs no external dependencies.
+Live mode requires BINANCE_API_KEY and BINANCE_API_SECRET in your .env file.
 
 Open http://localhost:8080 in your browser.
 """
@@ -34,9 +38,6 @@ logger = logging.getLogger("dashboard")
 # Silence noisy libs
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
-
-# Force paper mode before importing settings
-os.environ.setdefault("TRADING_MODE", "paper")
 
 from bot.database.db import init_db, get_session
 from bot.database.models import Trade, Position, Signal, PortfolioSnapshot, CopyLeader
@@ -293,7 +294,8 @@ class DashboardStrategy:
 #  Background tasks  — keeps data live while dashboard runs
 # ═══════════════════════════════════════════════════════
 
-def background_tasks(exchange, portfolio_tracker, risk_manager, strategies):
+def background_tasks(exchange, portfolio_tracker, risk_manager, strategies,
+                     is_paper=True):
     """Run periodic updates in a background thread."""
     logger.info("Background tasks started")
 
@@ -337,8 +339,8 @@ def background_tasks(exchange, portfolio_tracker, risk_manager, strategies):
                 except Exception:
                     pass
 
-            # Simulate a random AI signal every ~3 minutes
-            if cycle % 18 == 0 and cycle > 0:
+            # Simulate a random AI signal every ~3 minutes (paper only)
+            if is_paper and cycle % 18 == 0 and cycle > 0:
                 try:
                     session = get_session()
                     sym = random.choice(SYMBOLS)
@@ -370,34 +372,138 @@ def background_tasks(exchange, portfolio_tracker, risk_manager, strategies):
 #  Main
 # ═══════════════════════════════════════════════════════
 
+def _load_env_config():
+    """Load configuration from .env file."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass  # dotenv is optional, user can export env vars directly
+
+
+def _create_live_exchange(testnet: bool):
+    """Create a live Binance exchange client. Exits on failure."""
+    api_key = os.environ.get("BINANCE_API_KEY", "")
+    api_secret = os.environ.get("BINANCE_API_SECRET", "")
+
+    if not api_key or api_key == "your_api_key_here":
+        print("\n  ERROR: BINANCE_API_KEY not configured!")
+        print("  Set it in your .env file or export it as an environment variable.")
+        print("  See .env.example for details.\n")
+        sys.exit(1)
+    if not api_secret or api_secret == "your_api_secret_here":
+        print("\n  ERROR: BINANCE_API_SECRET not configured!")
+        print("  Set it in your .env file or export it as an environment variable.\n")
+        sys.exit(1)
+
+    from bot.exchange.client import ExchangeClient
+    exchange = ExchangeClient(
+        api_key=api_key,
+        api_secret=api_secret,
+        testnet=testnet,
+    )
+    if not exchange.connect():
+        print("\n  ERROR: Failed to connect to Binance. Check your API keys.\n")
+        sys.exit(1)
+    return exchange
+
+
 def main():
     parser = argparse.ArgumentParser(description="Crypto Trading Bot Dashboard")
     parser.add_argument("--port", type=int, default=8080, help="Port (default 8080)")
     parser.add_argument("--host", default="0.0.0.0", help="Host (default 0.0.0.0)")
+    parser.add_argument(
+        "--mode", choices=["paper", "live"], default="paper",
+        help="Trading mode: 'paper' (simulated) or 'live' (real money)",
+    )
+    parser.add_argument(
+        "--testnet", action="store_true",
+        help="Use Binance testnet instead of production (live mode only)",
+    )
+    parser.add_argument(
+        "--confirm-live", action="store_true",
+        help="Skip the interactive confirmation prompt for live mode",
+    )
     args = parser.parse_args()
 
-    db_path = os.path.join(os.path.dirname(__file__), "dashboard.db")
+    is_paper = args.mode == "paper"
+
+    # Set env so any imported settings module sees the right mode
+    os.environ["TRADING_MODE"] = args.mode
+
+    # ── Live mode safety checks ──────────────────────
+    if not is_paper:
+        _load_env_config()
+
+        if not args.confirm_live:
+            print()
+            print("  ╔══════════════════════════════════════════════════════╗")
+            print("  ║  WARNING: You are about to start in LIVE mode!      ║")
+            print("  ║                                                      ║")
+            print("  ║  This will connect to Binance with your API keys     ║")
+            print("  ║  and trade with REAL MONEY.                          ║")
+            print("  ║                                                      ║")
+            print("  ║  Make sure you understand the risks before           ║")
+            print("  ║  proceeding. All trades are irreversible.            ║")
+            print("  ╚══════════════════════════════════════════════════════╝")
+            print()
+            try:
+                answer = input("  Type 'YES' to confirm live trading: ")
+            except (EOFError, KeyboardInterrupt):
+                print("\n  Aborted.")
+                sys.exit(0)
+            if answer.strip() != "YES":
+                print("  Aborted. Run with --mode paper for simulated trading.")
+                sys.exit(0)
+
+    # ── Database setup ───────────────────────────────
+    if is_paper:
+        db_name = "dashboard.db"
+    else:
+        db_name = "dashboard_live.db"
+
+    db_path = os.path.join(os.path.dirname(__file__), db_name)
     db_url = f"sqlite:///{db_path}"
 
-    # Fresh DB each launch for clean state
-    if os.path.exists(db_path):
+    # Paper mode: fresh DB each launch for clean state
+    # Live mode: persist DB across restarts to keep trade history
+    if is_paper and os.path.exists(db_path):
         os.remove(db_path)
 
     # ── Boot sequence ────────────────────────────────
-    print()
-    print("  ╔══════════════════════════════════════════╗")
-    print("  ║   Crypto Trading Bot  —  Dashboard       ║")
-    print("  ║   Mode: PAPER  |  Offline Simulation     ║")
-    print("  ╚══════════════════════════════════════════╝")
-    print()
+    if is_paper:
+        print()
+        print("  ╔══════════════════════════════════════════╗")
+        print("  ║   Crypto Trading Bot  —  Dashboard       ║")
+        print("  ║   Mode: PAPER  |  Offline Simulation     ║")
+        print("  ╚══════════════════════════════════════════╝")
+        print()
+    else:
+        net_label = "TESTNET" if args.testnet else "PRODUCTION"
+        print()
+        print("  ╔══════════════════════════════════════════╗")
+        print("  ║   Crypto Trading Bot  —  Dashboard       ║")
+        print(f"  ║   Mode: LIVE   |  Binance {net_label:<14s}║")
+        print("  ╚══════════════════════════════════════════╝")
+        print()
 
     init_db(db_url)
 
-    exchange = LocalPaperExchange(initial_balance_usdt=10000.0)
-    exchange.connect()
+    # ── Exchange setup ───────────────────────────────
+    if is_paper:
+        exchange = LocalPaperExchange(initial_balance_usdt=10000.0)
+        exchange.connect()
+        seed_database(exchange)
+        initial_balance = 10000.0
+    else:
+        exchange = _create_live_exchange(testnet=args.testnet)
+        balance = exchange.get_balance()
+        initial_balance = balance.get("USDT", {}).get("total", 0)
+        print(f"  Connected to Binance {'(testnet)' if args.testnet else ''}")
+        print(f"  Account balance: ${initial_balance:,.2f} USDT")
+        print()
 
-    seed_database(exchange)
-
+    # ── Managers ─────────────────────────────────────
     risk_manager = RiskManager(
         max_position_size_pct=10.0,
         max_positions=5,
@@ -409,17 +515,17 @@ def main():
         cooldown_after_losses=3,
         cooldown_minutes=60,
     )
-    risk_manager.update_peak_balance(10000.0)
+    risk_manager.update_peak_balance(initial_balance)
 
     order_manager = OrderManager(
         exchange_client=exchange,
         risk_manager=risk_manager,
-        is_paper=True,
+        is_paper=is_paper,
     )
 
     portfolio_tracker = PortfolioTracker(
         exchange_client=exchange,
-        is_paper=True,
+        is_paper=is_paper,
     )
 
     # Strategy wrappers
@@ -445,14 +551,17 @@ def main():
         target=background_tasks,
         args=(exchange, portfolio_tracker, risk_manager,
               [ai_trader, copy_trader, signal_follower]),
+        kwargs={"is_paper": is_paper},
         daemon=True,
     )
     bg.start()
 
     # ── Serve ────────────────────────────────────────
     url = f"http://localhost:{args.port}"
+    mode_label = "PAPER" if is_paper else "LIVE"
     print(f"  Dashboard:  {url}")
     print(f"  API docs:   {url}/docs")
+    print(f"  Mode:       {mode_label}")
     print()
     print("  Press Ctrl+C to stop.")
     print()

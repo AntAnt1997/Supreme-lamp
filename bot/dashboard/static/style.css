@@ -131,7 +131,20 @@ header {
 }
 
 .mode-badge.paper { background: var(--yellow-dim); color: var(--yellow); }
-.mode-badge.live { background: var(--green-dim); color: var(--green); }
+.mode-badge.live { background: var(--red-dim); color: var(--red); }
+
+/* ── Live Banner ──────────────────────────────────── */
+
+.live-banner {
+    background: var(--red-dim);
+    color: var(--red);
+    text-align: center;
+    padding: 8px 16px;
+    font-size: .82em;
+    font-weight: 700;
+    letter-spacing: .5px;
+    border-bottom: 1px solid var(--red);
+}
 
 /* ── Main ────────────────────────────────────────── */
 
