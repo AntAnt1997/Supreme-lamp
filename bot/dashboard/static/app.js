@@ -113,6 +113,12 @@ function renderBotStatus(s) {
     const badge = document.getElementById('bot-status');
     badge.textContent = s.mode.toUpperCase();
     badge.className = 'mode-badge ' + s.mode;
+
+    // Show warning banner in live mode
+    const banner = document.getElementById('live-banner');
+    if (banner) {
+        banner.style.display = s.mode === 'live' ? 'block' : 'none';
+    }
 }
 
 // ── Equity Chart ────────────────────────────────────
