@@ -1,7 +1,6 @@
 """Binance exchange client wrapper using ccxt."""
 
 import logging
-import time
 from typing import Optional
 
 import ccxt

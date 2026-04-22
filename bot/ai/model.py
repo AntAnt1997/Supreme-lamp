@@ -4,11 +4,10 @@ import logging
 import os
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
-from sklearn.metrics import accuracy_score, f1_score, classification_report
+from sklearn.metrics import accuracy_score, f1_score
 import joblib
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ class TradingModel:
             Dict with training metrics.
         """
         # Align X and y, drop NaN
-        combined = pd.concat([X, y.rename("label")], axis=1).dropna()
+        combined = pd.concat([X, y.rename("label")], axis=1, sort=False).dropna()
         X_clean = combined.drop("label", axis=1)
         y_clean = combined["label"]
 

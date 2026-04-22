@@ -3,7 +3,6 @@
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Index,
-    create_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
 

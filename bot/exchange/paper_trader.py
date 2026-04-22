@@ -3,7 +3,7 @@
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import ccxt
@@ -126,7 +126,7 @@ class PaperTrader:
                 "price": price,
                 "status": "open",
                 "timestamp": int(time.time() * 1000),
-                "datetime": datetime.utcnow().isoformat(),
+                "datetime": datetime.now(timezone.utc).isoformat(),
             }
             self.pending_orders.append(pending)
             logger.info(
@@ -187,7 +187,7 @@ class PaperTrader:
             "fee": {"cost": fee, "currency": quote},
             "status": "closed",
             "timestamp": int(time.time() * 1000),
-            "datetime": datetime.utcnow().isoformat(),
+            "datetime": datetime.now(timezone.utc).isoformat(),
         }
 
         self.orders.append(order)

@@ -39,13 +39,13 @@ logger = logging.getLogger("dashboard")
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
 
-from bot.database.db import init_db, get_session
-from bot.database.models import Trade, Position, Signal, PortfolioSnapshot, CopyLeader
-from bot.exchange.local_paper import LocalPaperExchange
-from bot.exchange.order_manager import OrderManager
-from bot.risk.manager import RiskManager
-from bot.portfolio.tracker import PortfolioTracker
-from bot.dashboard.app import create_dashboard
+from bot.database.db import init_db, get_session  # noqa: E402
+from bot.database.models import Trade, Position, Signal, PortfolioSnapshot, CopyLeader  # noqa: E402
+from bot.exchange.local_paper import LocalPaperExchange  # noqa: E402
+from bot.exchange.order_manager import OrderManager  # noqa: E402
+from bot.risk.manager import RiskManager  # noqa: E402
+from bot.portfolio.tracker import PortfolioTracker  # noqa: E402
+from bot.dashboard.app import create_dashboard  # noqa: E402
 
 
 # ═══════════════════════════════════════════════════════
@@ -90,7 +90,7 @@ def seed_database(exchange: LocalPaperExchange):
         ("ETH/USDT", "sell", 0.30,   3560,  "copy",   8.40,  56),
         ("SOL/USDT", "buy",  3.0,    144,   "signal", -3.20, 72),
         ("BNB/USDT", "sell", 0.8,    590,   "ai",     6.10,  96),
-        ("DOGE/USDT","buy",  1500,   0.168, "signal", -7.50, 120),
+        ("DOGE/USDT", "buy",  1500,   0.168, "signal", -7.50, 120),
         ("BTC/USDT", "buy",  0.005,  67200, "copy",   4.60,  144),
         ("ETH/USDT", "buy",  0.20,   3420,  "manual", 11.30, 168),
     ]
@@ -163,11 +163,11 @@ def seed_database(exchange: LocalPaperExchange):
     # ── 5.  Copy leaders ──
     leaders = [
         CopyLeader(external_id="whale_alpha", label="Whale Alpha",
-                    allocation_pct=0.15, is_active=True,
-                    total_pnl=42.30, num_trades_copied=6),
+                   allocation_pct=0.15, is_active=True,
+                   total_pnl=42.30, num_trades_copied=6),
         CopyLeader(external_id="degen_king", label="DegenKing",
-                    allocation_pct=0.10, is_active=True,
-                    total_pnl=-8.10, num_trades_copied=3),
+                   allocation_pct=0.10, is_active=True,
+                   total_pnl=-8.10, num_trades_copied=3),
     ]
     for ldr in leaders:
         session.add(ldr)
@@ -250,16 +250,16 @@ class DashboardStrategy:
             leaders = session.query(CopyLeader).all()
             return [
                 {
-                    "id": l.id,
-                    "external_id": l.external_id,
-                    "label": l.label,
-                    "allocation_pct": l.allocation_pct,
-                    "is_active": l.is_active,
-                    "total_pnl": l.total_pnl,
-                    "num_trades": l.num_trades_copied,
-                    "last_polled": l.last_polled_at.isoformat() if l.last_polled_at else None,
+                    "id": ldr.id,
+                    "external_id": ldr.external_id,
+                    "label": ldr.label,
+                    "allocation_pct": ldr.allocation_pct,
+                    "is_active": ldr.is_active,
+                    "total_pnl": ldr.total_pnl,
+                    "num_trades": ldr.num_trades_copied,
+                    "last_polled": ldr.last_polled_at.isoformat() if ldr.last_polled_at else None,
                 }
-                for l in leaders
+                for ldr in leaders
             ]
         finally:
             session.close()

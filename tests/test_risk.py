@@ -1,7 +1,7 @@
 """Tests for risk management system."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 from bot.risk.manager import RiskManager
 from bot.database.models import Position, Trade, PortfolioSnapshot
@@ -119,7 +119,7 @@ class TestRiskManager:
             trade = Trade(
                 symbol="BTC/USDT", side="sell", amount=0.01,
                 strategy="test", status="filled", pnl=pnl,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             test_db.add(trade)
         test_db.commit()
