@@ -1,0 +1,240 @@
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+       background: #f8fafc; color: #1a202c; line-height: 1.6; }
+a { color: #3b82f6; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Navbar ───────────────────────────────────────────────────── */
+.navbar { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 2rem;
+          background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-size: 1.25rem; font-weight: 700; color: #1d4ed8; white-space: nowrap; }
+.nav-brand a { color: inherit; }
+.nav-links { display: flex; gap: 1rem; flex: 1; }
+.nav-links a { color: #4b5563; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 6px; }
+.nav-links a:hover, .nav-links a.active { color: #1d4ed8; background: #eff6ff; text-decoration: none; }
+.nav-auth { display: flex; gap: 0.5rem; margin-left: auto; }
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.btn { padding: 0.5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer;
+       font-size: 0.9rem; font-weight: 600; transition: .15s; display: inline-block; }
+.btn-primary { background: #1d4ed8; color: #fff; }
+.btn-primary:hover { background: #1e40af; }
+.btn-outline { background: transparent; color: #1d4ed8; border: 1.5px solid #1d4ed8; }
+.btn-outline:hover { background: #eff6ff; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
+.btn-lg { padding: 0.75rem 2rem; font-size: 1rem; }
+.full-width { width: 100%; }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero { background: linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%);
+        color: #fff; padding: 4rem 2rem; text-align: center; }
+.hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+.hero p { font-size: 1.15rem; opacity: .9; max-width: 600px; margin: 0 auto 2rem; }
+.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.hero-actions .btn-outline { color: #fff; border-color: #fff; }
+.hero-actions .btn-outline:hover { background: rgba(255,255,255,.15); }
+
+/* ── Sections ─────────────────────────────────────────────────── */
+.section { padding: 3rem 2rem; max-width: 1200px; margin: 0 auto; }
+.section-alt { background: #f1f5f9; padding: 3rem 2rem; }
+.section-alt .section { max-width: 1200px; margin: 0 auto; padding: 0; }
+.section-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
+
+/* ── Department Cards ─────────────────────────────────────────── */
+.dept-filter { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; }
+.filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1.5px solid #cbd5e1;
+              background: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+.filter-btn:hover, .filter-btn.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+.dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.dept-card { background: #fff; border-radius: 12px; padding: 1.25rem; text-align: center;
+             box-shadow: 0 1px 4px rgba(0,0,0,.06); cursor: pointer; transition: .2s; }
+.dept-card:hover { box-shadow: 0 4px 16px rgba(29,78,216,.15); transform: translateY(-2px); }
+.dept-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.dept-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; }
+.dept-card p { font-size: 0.8rem; color: #64748b; }
+
+/* ── Quick Actions ────────────────────────────────────────────── */
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+.action-card { background: #fff; border-radius: 12px; padding: 2rem 1.5rem; text-align: center;
+               box-shadow: 0 1px 4px rgba(0,0,0,.06); cursor: pointer; transition: .2s; }
+.action-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+.action-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.action-card h3 { font-weight: 700; margin-bottom: 0.5rem; }
+.action-card p { color: #64748b; font-size: 0.9rem; }
+
+/* ── Modals ───────────────────────────────────────────────────── */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex;
+         align-items: center; justify-content: center; z-index: 1000; }
+.modal.hidden { display: none; }
+.modal-content { background: #fff; border-radius: 16px; padding: 2rem; width: 100%;
+                 max-width: 480px; position: relative; max-height: 90vh; overflow-y: auto; }
+.modal-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none;
+               font-size: 1.2rem; cursor: pointer; color: #94a3b8; }
+.modal-close:hover { color: #1a202c; }
+.modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+label { display: block; font-size: 0.85rem; font-weight: 600; margin: 0.75rem 0 0.3rem; color: #374151; }
+input, select, textarea {
+  width: 100%; padding: 0.6rem 0.9rem; border: 1.5px solid #d1d5db; border-radius: 8px;
+  font-size: 0.95rem; font-family: inherit; transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.text-center { text-align: center; margin-top: 1rem; font-size: 0.9rem; }
+
+/* ── Page Container ───────────────────────────────────────────── */
+.page-container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+.page-container h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; }
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
+.tab { padding: 0.6rem 1.5rem; border: none; background: none; cursor: pointer;
+       font-size: 1rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; }
+.tab.active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+.tab-panel.hidden { display: none; }
+
+/* ── Provider Grid ────────────────────────────────────────────── */
+.search-bar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.search-bar input, .search-bar select { flex: 1; min-width: 150px; }
+.provider-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.provider-card { background: #fff; border-radius: 12px; padding: 1.5rem;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.06); display: flex; gap: 1rem; align-items: flex-start; }
+.provider-photo { font-size: 2.5rem; flex-shrink: 0; }
+.provider-photo img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.provider-info { flex: 1; }
+.provider-info h4 { font-weight: 700; margin-bottom: 0.2rem; }
+.provider-info .role { color: #6366f1; font-size: 0.85rem; font-weight: 600; text-transform: capitalize; }
+.provider-info .bio { color: #64748b; font-size: 0.85rem; margin: 0.3rem 0; }
+.provider-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.tag { background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 20px; }
+
+/* ── Appointment Cards ────────────────────────────────────────── */
+.appointment-list { display: flex; flex-direction: column; gap: 1rem; }
+.appt-card { background: #fff; border-radius: 12px; padding: 1.25rem;
+             box-shadow: 0 1px 4px rgba(0,0,0,.06); border-left: 4px solid #3b82f6; }
+.appt-card.status-completed { border-color: #10b981; }
+.appt-card.status-cancelled { border-color: #ef4444; opacity: .7; }
+.appt-time { font-size: 1.05rem; font-weight: 700; }
+.appt-type { color: #6366f1; font-size: 0.85rem; margin-top: 0.2rem; }
+.appt-reason { color: #64748b; font-size: 0.9rem; margin: 0.3rem 0; }
+.appt-status { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.7rem;
+               border-radius: 20px; background: #e2e8f0; color: #475569; }
+
+/* ── Slot Picker ──────────────────────────────────────────────── */
+.slot-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+.slot-btn { padding: 0.4rem 1rem; border: 1.5px solid #d1d5db; border-radius: 8px;
+            background: #fff; cursor: pointer; font-size: 0.9rem; }
+.slot-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.slot-btn.selected { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+.selected-provider { background: #eff6ff; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem;
+                     font-weight: 600; color: #1d4ed8; }
+
+/* ── Bill Cards ───────────────────────────────────────────────── */
+.bill-card { background: #fff; border-radius: 12px; padding: 1.5rem;
+             box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 1rem; }
+.bill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.bill-id { font-weight: 700; font-size: 1.05rem; }
+.bill-amounts { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+.amount-row { display: flex; justify-content: space-between; padding: 0.5rem 1rem;
+              border-bottom: 1px solid #f1f5f9; }
+.amount-row.green span:last-child { color: #10b981; }
+.amount-row.bold { font-weight: 700; background: #f8fafc; }
+.bill-due { color: #64748b; font-size: 0.9rem; margin-bottom: 0.75rem; }
+.plan-info { color: #6366f1; font-size: 0.9rem; margin-bottom: 0.75rem; }
+.bill-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.pay-summary { background: #eff6ff; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; }
+.stripe-card-placeholder { border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 1rem;
+                            text-align: center; color: #64748b; font-size: 0.9rem; margin: 0.75rem 0; }
+
+/* ── Status Badges ────────────────────────────────────────────── */
+.badge-issued, .badge-draft { background: #fef9c3; color: #92400e; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-paid { background: #d1fae5; color: #065f46; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-overdue, .badge-in_collections { background: #fee2e2; color: #991b1b; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-partially_paid { background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-succeeded { background: #d1fae5; color: #065f46; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-pending, .badge-processing { background: #fef9c3; color: #92400e; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+.badge-failed { background: #fee2e2; color: #991b1b; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; }
+
+/* ── Data Table ───────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden;
+              box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.data-table th { background: #f1f5f9; padding: 0.75rem 1rem; text-align: left; font-size: 0.85rem;
+                 font-weight: 700; color: #374151; }
+.data-table td { padding: 0.75rem 1rem; border-top: 1px solid #f1f5f9; font-size: 0.9rem; }
+
+/* ── Chat Page ────────────────────────────────────────────────── */
+.chat-page { display: flex; height: calc(100vh - 64px); }
+.chat-sidebar { width: 280px; flex-shrink: 0; background: #fff; border-right: 1px solid #e2e8f0;
+                padding: 1.5rem; overflow-y: auto; }
+.chat-sidebar h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+.sidebar-desc { color: #64748b; font-size: 0.9rem; margin-bottom: 0.5rem; }
+.chat-sidebar ul { list-style: none; padding: 0; }
+.chat-sidebar ul li { padding: 0.35rem 0; font-size: 0.9rem; color: #374151; }
+.disclaimer { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+              padding: 0.75rem; font-size: 0.8rem; color: #7f1d1d; margin-top: 1rem; }
+.chat-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.chat-header { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem;
+               background: #fff; border-bottom: 1px solid #e2e8f0; }
+.chat-avatar { font-size: 2rem; }
+.online-badge { font-size: 0.8rem; color: #10b981; font-weight: 600; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.message { max-width: 75%; }
+.user-message { align-self: flex-end; }
+.ai-message { align-self: flex-start; }
+.message-bubble { padding: 0.75rem 1.1rem; border-radius: 16px; line-height: 1.5; font-size: 0.95rem; }
+.user-message .message-bubble { background: #1d4ed8; color: #fff; border-bottom-right-radius: 4px; }
+.ai-message .message-bubble { background: #fff; color: #1a202c; border-bottom-left-radius: 4px;
+                               box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.message-time { font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;
+                text-align: right; }
+.ai-message .message-time { text-align: left; }
+.chat-input-area { background: #fff; border-top: 1px solid #e2e8f0; padding: 1rem 1.5rem; }
+.quick-prompts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.quick-btn { padding: 0.3rem 0.85rem; border-radius: 20px; border: 1.5px solid #cbd5e1;
+             background: #fff; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+.quick-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.quick-btn.emergency { border-color: #ef4444; color: #ef4444; }
+.chat-input-row { display: flex; gap: 0.75rem; }
+.chat-input-row textarea { flex: 1; resize: none; border-radius: 12px; padding: 0.75rem; }
+.send-btn { align-self: flex-end; padding: 0.75rem 1.5rem; }
+
+/* ── Triage Panel ─────────────────────────────────────────────── */
+.triage-panel { margin-top: 1rem; }
+.urgency-badge { font-weight: 700; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 8px;
+                 text-align: center; margin-bottom: 0.75rem; }
+.urgency-emergency { background: #fee2e2; color: #991b1b; }
+.urgency-urgent { background: #fef3c7; color: #92400e; }
+.urgency-routine { background: #d1fae5; color: #065f46; }
+.urgency-selfcare { background: #e0e7ff; color: #3730a3; }
+.triage-summary { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
+
+/* ── Floating Chat Button ─────────────────────────────────────── */
+.chat-fab { position: fixed; bottom: 2rem; right: 2rem; background: #1d4ed8; color: #fff;
+            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 16px rgba(29,78,216,.4);
+            z-index: 999; transition: .2s; }
+.chat-fab:hover { background: #1e40af; transform: scale(1.1); }
+.fab-badge { position: absolute; top: -4px; right: -4px; background: #10b981; color: #fff;
+             font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 20px; }
+
+/* ── Footer ───────────────────────────────────────────────────── */
+.footer { background: #1e293b; color: #94a3b8; text-align: center; padding: 2rem; margin-top: 3rem; }
+.footer p { margin: 0.25rem 0; font-size: 0.9rem; }
+
+/* ── Utilities ────────────────────────────────────────────────── */
+.loading { text-align: center; color: #94a3b8; padding: 2rem; }
+.error { color: #ef4444; }
+.hidden { display: none !important; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 1.75rem; }
+  .nav-links { display: none; }
+  .chat-sidebar { display: none; }
+  .dept-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .form-row { grid-template-columns: 1fr; }
+}

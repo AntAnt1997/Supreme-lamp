@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Appointments – Healthcare Platform</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><a href="/">🏥 HealthCare+</a></div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/appointments" class="active">Appointments</a>
+      <a href="/billing">Billing</a>
+      <a href="/chat">AI Assistant</a>
+    </div>
+    <div class="nav-auth" id="navAuth"></div>
+  </nav>
+
+  <div class="page-container">
+    <h1>Appointments</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('book')">Book Appointment</button>
+      <button class="tab" onclick="switchTab('my')">My Appointments</button>
+    </div>
+
+    <!-- Book Tab -->
+    <div id="tab-book" class="tab-panel">
+      <div class="search-bar">
+        <input type="text" id="providerSearch" placeholder="Search by name…" oninput="searchProviders()" />
+        <select id="deptFilter" onchange="searchProviders()">
+          <option value="">All Departments</option>
+        </select>
+        <label>
+          <input type="checkbox" id="telehealthOnly" onchange="searchProviders()" />
+          Telehealth only
+        </label>
+      </div>
+
+      <div id="providerList" class="provider-grid">
+        <div class="loading">Loading providers…</div>
+      </div>
+
+      <!-- Booking Modal -->
+      <div id="bookingModal" class="modal hidden">
+        <div class="modal-content">
+          <h2>Book Appointment</h2>
+          <div id="selectedProviderInfo"></div>
+          <label>Date</label>
+          <input type="date" id="bookDate" min="" onchange="loadSlots()" />
+          <label>Available Slots</label>
+          <div id="slotPicker" class="slot-picker"></div>
+          <label>Visit Type</label>
+          <select id="visitType">
+            <option value="in_person">In Person</option>
+            <option value="telehealth">Telehealth</option>
+          </select>
+          <label>Reason for Visit</label>
+          <textarea id="visitReason" rows="3" placeholder="Describe your reason for visit…"></textarea>
+          <div class="modal-actions">
+            <button onclick="confirmBooking()" class="btn btn-primary">Confirm Booking</button>
+            <button onclick="closeModal('bookingModal')" class="btn btn-outline">Cancel</button>
+          </div>
+          <button onclick="closeModal('bookingModal')" class="modal-close">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Appointments Tab -->
+    <div id="tab-my" class="tab-panel hidden">
+      <div id="myAppointmentsList" class="appointment-list">
+        <div class="loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-fab" onclick="window.location.href='/chat'" title="24/7 AI Assistant">
+    💬<span class="fab-badge">24/7</span>
+  </div>
+
+  <script src="/static/portal.js"></script>
+  <script>
+    let selectedProvider = null;
+    let selectedSlot = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDepts();
+      loadProviders();
+      // Check URL params
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('department_id')) {
+        document.getElementById('deptFilter').value = params.get('department_id');
+      }
+      if (params.get('view') === 'history') switchTab('my');
+    });
+
+    async function loadDepts() {
+      const sel = document.getElementById('deptFilter');
+      try {
+        const r = await fetch('/api/departments');
+        const depts = await r.json();
+        depts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name;
+          sel.appendChild(opt);
+        });
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('department_id')) {
+          sel.value = params.get('department_id');
+          searchProviders();
+        }
+      } catch(e) {}
+    }
+
+    async function loadProviders() {
+      const grid = document.getElementById('providerList');
+      try {
+        const r = await fetch('/api/providers');
+        const providers = await r.json();
+        renderProviders(providers);
+      } catch(e) {
+        grid.innerHTML = '<p class="error">Could not load providers.</p>';
+      }
+    }
+
+    async function searchProviders() {
+      const name = document.getElementById('providerSearch').value;
+      const dept = document.getElementById('deptFilter').value;
+      const telehealth = document.getElementById('telehealthOnly').checked;
+      let url = '/api/providers?';
+      if (name) url += `search=${encodeURIComponent(name)}&`;
+      if (dept) url += `department_id=${dept}&`;
+      if (telehealth) url += `telehealth=true&`;
+      const r = await fetch(url);
+      renderProviders(await r.json());
+    }
+
+    function renderProviders(providers) {
+      const grid = document.getElementById('providerList');
+      if (!providers.length) { grid.innerHTML = '<p>No providers found.</p>'; return; }
+      grid.innerHTML = providers.map(p => `
+        <div class="provider-card">
+          <div class="provider-photo">${p.photo_url ? `<img src="${p.photo_url}" />` : '👨‍⚕️'}</div>
+          <div class="provider-info">
+            <h4>${p.display_title}</h4>
+            <p class="role">${p.role.replace('_', ' ')}</p>
+            <p class="bio">${p.bio || ''}</p>
+            <div class="provider-tags">
+              ${p.telehealth_available ? '<span class="tag">📹 Telehealth</span>' : ''}
+              ${p.in_person_available ? '<span class="tag">🏥 In-Person</span>' : ''}
+              <span class="tag">⭐ ${p.average_rating.toFixed(1)}</span>
+            </div>
+          </div>
+          <button onclick="openBooking(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-primary">Book</button>
+        </div>
+      `).join('');
+    }
+
+    function openBooking(provider) {
+      selectedProvider = provider;
+      selectedSlot = null;
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('bookDate').min = today;
+      document.getElementById('bookDate').value = '';
+      document.getElementById('slotPicker').innerHTML = '<p>Select a date above</p>';
+      document.getElementById('selectedProviderInfo').innerHTML = `
+        <div class="selected-provider">
+          <strong>${provider.display_title}</strong>
+          ${provider.telehealth_available ? ' · Telehealth available' : ''}
+        </div>`;
+      const vt = document.getElementById('visitType');
+      vt.innerHTML = '';
+      if (provider.in_person_available) vt.innerHTML += '<option value="in_person">In Person</option>';
+      if (provider.telehealth_available) vt.innerHTML += '<option value="telehealth">Telehealth</option>';
+      showModal('bookingModal');
+    }
+
+    async function loadSlots() {
+      const date = document.getElementById('bookDate').value;
+      if (!date || !selectedProvider) return;
+      const picker = document.getElementById('slotPicker');
+      picker.innerHTML = '<div class="loading">Loading slots…</div>';
+      try {
+        const r = await fetch(`/api/providers/${selectedProvider.id}/availability?date=${date}`);
+        const data = await r.json();
+        if (!data.slots.length) { picker.innerHTML = '<p>No available slots on this date.</p>'; return; }
+        picker.innerHTML = data.slots.map(s => {
+          const t = new Date(s.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+          return `<button class="slot-btn" onclick="selectSlot('${s.start}', this)">${t}</button>`;
+        }).join('');
+      } catch(e) {
+        picker.innerHTML = '<p class="error">Could not load slots.</p>';
+      }
+    }
+
+    function selectSlot(start, el) {
+      document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedSlot = start;
+    }
+
+    async function confirmBooking() {
+      if (!selectedSlot) { alert('Please select a time slot.'); return; }
+      const token = localStorage.getItem('hc_token');
+      if (!token) { showLoginModal(); return; }
+      const body = {
+        provider_id: selectedProvider.id,
+        scheduled_start: selectedSlot,
+        appointment_type: document.getElementById('visitType').value,
+        reason: document.getElementById('visitReason').value,
+      };
+      try {
+        const r = await fetch('/api/appointments/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || 'Booking failed');
+        closeModal('bookingModal');
+        alert(`✅ Appointment booked!\n${new Date(selectedSlot).toLocaleString()}`);
+        switchTab('my');
+        loadMyAppointments();
+      } catch(e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function loadMyAppointments() {
+      const token = localStorage.getItem('hc_token');
+      if (!token) { document.getElementById('myAppointmentsList').innerHTML = '<p>Please sign in to view appointments.</p>'; return; }
+      const r = await fetch('/api/appointments/', {headers: {'Authorization': `Bearer ${token}`}});
+      const list = await r.json();
+      const div = document.getElementById('myAppointmentsList');
+      if (!list.length) { div.innerHTML = '<p>No appointments found.</p>'; return; }
+      div.innerHTML = list.map(a => `
+        <div class="appt-card status-${a.status}">
+          <div class="appt-time">${new Date(a.scheduled_start).toLocaleString()}</div>
+          <div class="appt-type">${a.appointment_type.replace('_',' ')} · Provider #${a.provider_id}</div>
+          <div class="appt-reason">${a.reason || ''}</div>
+          <span class="appt-status">${a.status}</span>
+          ${a.telehealth_link ? `<a href="${a.telehealth_link}" target="_blank" class="btn btn-sm">Join Telehealth</a>` : ''}
+          ${a.status === 'scheduled' ? `<button onclick="cancelAppt(${a.id})" class="btn btn-sm btn-danger">Cancel</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function cancelAppt(id) {
+      if (!confirm('Cancel this appointment?')) return;
+      const token = localStorage.getItem('hc_token');
+      await fetch(`/api/appointments/${id}`, {method:'DELETE', headers:{'Authorization':`Bearer ${token}`}});
+      loadMyAppointments();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      event.target && event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      if (tab === 'my') loadMyAppointments();
+    }
+  </script>
+</body>
+</html>

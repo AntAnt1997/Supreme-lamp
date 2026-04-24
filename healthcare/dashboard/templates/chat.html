@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Medical Assistant – Healthcare Platform</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><a href="/">🏥 HealthCare+</a></div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/appointments">Appointments</a>
+      <a href="/billing">Billing</a>
+      <a href="/chat" class="active">AI Assistant</a>
+    </div>
+    <div class="nav-auth" id="navAuth"></div>
+  </nav>
+
+  <div class="chat-page">
+    <!-- Sidebar -->
+    <aside class="chat-sidebar">
+      <h3>AI Medical Assistant</h3>
+      <p class="sidebar-desc">I'm available 24/7 to help with:</p>
+      <ul>
+        <li>🩺 Symptom assessment</li>
+        <li>📅 Appointment guidance</li>
+        <li>💊 Medication questions</li>
+        <li>💳 Billing & insurance</li>
+        <li>🏥 Department navigation</li>
+      </ul>
+      <hr />
+      <div id="triagePanel" class="triage-panel hidden">
+        <h4>Triage Result</h4>
+        <div id="urgencyBadge"></div>
+        <div id="deptSuggestion"></div>
+        <div id="triageSummary"></div>
+        <button id="bookFromTriage" class="btn btn-primary full-width hidden" onclick="bookFromTriage()">
+          📅 Book Appointment
+        </button>
+      </div>
+      <div class="disclaimer">
+        ⚠️ AI assistance does not replace professional medical advice. For emergencies, call <strong>911</strong>.
+      </div>
+    </aside>
+
+    <!-- Chat Window -->
+    <main class="chat-main">
+      <div class="chat-header">
+        <div class="chat-avatar">🤖</div>
+        <div>
+          <strong>Healthcare AI Assistant</strong>
+          <span class="online-badge">● Online 24/7</span>
+        </div>
+      </div>
+
+      <div id="chatMessages" class="chat-messages">
+        <div class="message ai-message">
+          <div class="message-bubble">
+            Hello! I'm your AI medical assistant, available 24/7. How can I help you today?
+            <br/><br/>
+            You can describe your symptoms, ask about a department or specialist, or get help with billing and appointments.
+          </div>
+          <div class="message-time">Just now</div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="quick-prompts">
+          <button onclick="sendQuick('I have chest pain and difficulty breathing')" class="quick-btn emergency">🚨 Chest Pain</button>
+          <button onclick="sendQuick('I need to schedule a dental appointment')" class="quick-btn">🦷 Dental</button>
+          <button onclick="sendQuick('I have questions about my bill')" class="quick-btn">💳 Billing</button>
+          <button onclick="sendQuick('I need a prescription refill')" class="quick-btn">💊 Prescription</button>
+          <button onclick="sendQuick('I have been feeling anxious and depressed')" class="quick-btn">🧘 Mental Health</button>
+        </div>
+        <div class="chat-input-row">
+          <textarea
+            id="chatInput"
+            placeholder="Describe your symptoms or ask a question…"
+            rows="2"
+            onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}"
+          ></textarea>
+          <button onclick="sendMessage()" class="btn btn-primary send-btn" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/portal.js"></script>
+  <script>
+    let sessionToken = localStorage.getItem('hc_chat_session');
+    let recommendedProviderId = null;
+    let suggestedDeptName = null;
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      appendMessage('user', text);
+
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = '…';
+
+      try {
+        const token = localStorage.getItem('hc_token');
+        const endpoint = token ? '/api/ai/chat' : '/api/ai/chat/anonymous';
+        const headers = {'Content-Type': 'application/json'};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const r = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({session_token: sessionToken, message: text}),
+        });
+        const data = await r.json();
+
+        sessionToken = data.session_token;
+        localStorage.setItem('hc_chat_session', sessionToken);
+
+        // Clean reply (remove TRIAGE_READY marker)
+        const reply = data.reply.replace(/TRIAGE_READY:\s*true/gi, '').trim();
+        appendMessage('ai', reply);
+
+        // Show triage result if available
+        if (data.triage_completed && data.urgency_level) {
+          showTriageResult(data);
+          recommendedProviderId = data.recommended_provider_id;
+          suggestedDeptName = data.suggested_department;
+        }
+      } catch(e) {
+        appendMessage('ai', 'Sorry, I encountered an error. Please try again.');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send';
+      }
+    }
+
+    function sendQuick(text) {
+      document.getElementById('chatInput').value = text;
+      sendMessage();
+    }
+
+    function appendMessage(role, content) {
+      const messages = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      div.innerHTML = `
+        <div class="message-bubble">${content.replace(/\n/g, '<br/>')}</div>
+        <div class="message-time">${time}</div>
+      `;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function showTriageResult(data) {
+      const panel = document.getElementById('triagePanel');
+      const urgency = data.urgency_level;
+      const urgencyLabels = {
+        emergency: '🚨 EMERGENCY – Call 911',
+        urgent: '⚠️ URGENT – Seek care today',
+        routine: '📅 ROUTINE – Schedule appointment',
+        self_care: '🏠 SELF-CARE – Manage at home',
+      };
+      const urgencyColors = {
+        emergency: 'urgency-emergency',
+        urgent: 'urgency-urgent',
+        routine: 'urgency-routine',
+        self_care: 'urgency-selfcare',
+      };
+
+      document.getElementById('urgencyBadge').innerHTML = `
+        <div class="urgency-badge ${urgencyColors[urgency]}">${urgencyLabels[urgency] || urgency}</div>`;
+      document.getElementById('deptSuggestion').innerHTML = data.suggested_department ?
+        `<p>Suggested: <strong>${data.suggested_department}</strong></p>` : '';
+      document.getElementById('triageSummary').innerHTML = data.triage_summary ?
+        `<p class="triage-summary">${data.triage_summary}</p>` : '';
+
+      if (data.recommended_provider_id || data.suggested_department) {
+        document.getElementById('bookFromTriage').classList.remove('hidden');
+      }
+      panel.classList.remove('hidden');
+    }
+
+    function bookFromTriage() {
+      if (suggestedDeptName) {
+        window.location.href = `/appointments?department_name=${encodeURIComponent(suggestedDeptName)}`;
+      } else {
+        window.location.href = '/appointments';
+      }
+    }
+  </script>
+</body>
+</html>

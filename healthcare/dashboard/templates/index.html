@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare Platform – Patient Portal</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-brand">🏥 HealthCare+</div>
+    <div class="nav-links">
+      <a href="/" class="active">Home</a>
+      <a href="/appointments">Appointments</a>
+      <a href="/billing">Billing</a>
+      <a href="/chat">AI Assistant</a>
+    </div>
+    <div class="nav-auth" id="navAuth">
+      <button onclick="showLoginModal()" class="btn btn-outline">Sign In</button>
+      <button onclick="showRegisterModal()" class="btn btn-primary">Register</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Your Health, Our Priority</h1>
+      <p>24/7 AI-powered healthcare – appointments, billing, and medical support across every department.</p>
+      <div class="hero-actions">
+        <button onclick="window.location.href='/chat'" class="btn btn-primary btn-lg">💬 Talk to AI Assistant</button>
+        <button onclick="window.location.href='/appointments'" class="btn btn-outline btn-lg">📅 Book Appointment</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Departments Grid -->
+  <section class="section">
+    <h2 class="section-title">Our Medical Departments</h2>
+    <div class="dept-filter">
+      <button class="filter-btn active" onclick="filterDepts('all')">All</button>
+      <button class="filter-btn" onclick="filterDepts('primary_care')">Primary Care</button>
+      <button class="filter-btn" onclick="filterDepts('dentistry')">Dentistry</button>
+      <button class="filter-btn" onclick="filterDepts('emergency')">Emergency</button>
+      <button class="filter-btn" onclick="filterDepts('cardiovascular')">Cardiology</button>
+      <button class="filter-btn" onclick="filterDepts('behavioral_health')">Mental Health</button>
+      <button class="filter-btn" onclick="filterDepts('surgery')">Surgery</button>
+      <button class="filter-btn" onclick="filterDepts('rehabilitation')">Rehab</button>
+      <button class="filter-btn" onclick="filterDepts('specialty')">Specialty</button>
+    </div>
+    <div id="departmentsGrid" class="dept-grid">
+      <div class="loading">Loading departments…</div>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="section section-alt">
+    <h2 class="section-title">What Can We Help You With?</h2>
+    <div class="quick-actions">
+      <div class="action-card" onclick="window.location.href='/appointments'">
+        <div class="action-icon">📅</div>
+        <h3>Book Appointment</h3>
+        <p>Schedule with any doctor or specialist</p>
+      </div>
+      <div class="action-card" onclick="window.location.href='/billing'">
+        <div class="action-icon">💳</div>
+        <h3>Pay Bill</h3>
+        <p>View and pay your medical bills</p>
+      </div>
+      <div class="action-card" onclick="window.location.href='/chat'">
+        <div class="action-icon">🤖</div>
+        <h3>AI Symptom Check</h3>
+        <p>24/7 triage and medical guidance</p>
+      </div>
+      <div class="action-card" onclick="window.location.href='/appointments?view=history'">
+        <div class="action-icon">📋</div>
+        <h3>Medical Records</h3>
+        <p>View your visit history and results</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Sign In</h2>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required />
+        <label>Password</label>
+        <input type="password" id="loginPassword" required />
+        <button type="submit" class="btn btn-primary full-width">Sign In</button>
+      </form>
+      <div id="mfaSection" class="hidden">
+        <label>MFA Code</label>
+        <input type="text" id="mfaCode" maxlength="6" placeholder="6-digit code" />
+        <button onclick="submitMFA()" class="btn btn-primary full-width">Verify</button>
+      </div>
+      <p class="text-center">No account? <a href="#" onclick="showRegisterModal()">Register</a></p>
+      <button onclick="closeModal('loginModal')" class="modal-close">✕</button>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Create Account</h2>
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-row">
+          <div>
+            <label>First Name</label>
+            <input type="text" id="regFirst" required />
+          </div>
+          <div>
+            <label>Last Name</label>
+            <input type="text" id="regLast" required />
+          </div>
+        </div>
+        <label>Email</label>
+        <input type="email" id="regEmail" required />
+        <label>Password</label>
+        <input type="password" id="regPassword" required minlength="8" />
+        <label>Date of Birth</label>
+        <input type="date" id="regDob" required />
+        <label>Phone (optional)</label>
+        <input type="tel" id="regPhone" />
+        <button type="submit" class="btn btn-primary full-width">Create Account</button>
+      </form>
+      <p class="text-center">Already registered? <a href="#" onclick="showLoginModal()">Sign In</a></p>
+      <button onclick="closeModal('registerModal')" class="modal-close">✕</button>
+    </div>
+  </div>
+
+  <!-- Floating AI Chat Button -->
+  <div class="chat-fab" onclick="window.location.href='/chat'" title="24/7 AI Assistant">
+    💬
+    <span class="fab-badge">24/7</span>
+  </div>
+
+  <footer class="footer">
+    <p>© 2026 HealthCare+ Platform. For emergencies, call <strong>911</strong>.</p>
+    <p>This platform does not replace professional medical advice.</p>
+  </footer>
+
+  <script src="/static/portal.js"></script>
+  <script>
+    // Load departments on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDepartments();
+    });
+
+    let allDepartments = [];
+
+    async function loadDepartments() {
+      const grid = document.getElementById('departmentsGrid');
+      try {
+        const resp = await fetch('/api/departments');
+        allDepartments = await resp.json();
+        renderDepts(allDepartments);
+      } catch(e) {
+        grid.innerHTML = '<p class="error">Could not load departments.</p>';
+      }
+    }
+
+    function renderDepts(depts) {
+      const grid = document.getElementById('departmentsGrid');
+      if (!depts.length) { grid.innerHTML = '<p>No departments found.</p>'; return; }
+      const icons = {
+        primary_care: '🩺', dentistry: '🦷', emergency: '🚨',
+        cardiovascular: '❤️', neurology: '🧠', oncology: '🎗',
+        orthopedics: '🦴', dermatology: '🔬', womens_health: '👩‍⚕️',
+        pediatrics: '👶', behavioral_health: '🧘', diagnostics: '🔭',
+        surgery: '⚕️', rehabilitation: '🏃', specialty: '⭐', ancillary: '💊',
+      };
+      grid.innerHTML = depts.map(d => `
+        <div class="dept-card" data-category="${d.category}" onclick="findProviders(${d.id}, '${d.name}')">
+          <div class="dept-icon">${icons[d.category] || '🏥'}</div>
+          <h4>${d.name}</h4>
+          <p>${d.description || ''}</p>
+        </div>
+      `).join('');
+    }
+
+    function filterDepts(category) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const filtered = category === 'all' ? allDepartments : allDepartments.filter(d => d.category === category);
+      renderDepts(filtered);
+    }
+
+    function findProviders(deptId, deptName) {
+      window.location.href = `/appointments?department_id=${deptId}&department_name=${encodeURIComponent(deptName)}`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Billing – Healthcare Platform</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><a href="/">🏥 HealthCare+</a></div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/appointments">Appointments</a>
+      <a href="/billing" class="active">Billing</a>
+      <a href="/chat">AI Assistant</a>
+    </div>
+    <div class="nav-auth" id="navAuth"></div>
+  </nav>
+
+  <div class="page-container">
+    <h1>Billing &amp; Payments</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('bills')">My Bills</button>
+      <button class="tab" onclick="switchTab('history')">Payment History</button>
+    </div>
+
+    <!-- Bills Tab -->
+    <div id="tab-bills" class="tab-panel">
+      <div id="billsList">
+        <div class="loading">Loading bills…</div>
+      </div>
+    </div>
+
+    <!-- Payment History Tab -->
+    <div id="tab-history" class="tab-panel hidden">
+      <div id="paymentHistory">
+        <div class="loading">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Pay Modal -->
+    <div id="payModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Make a Payment</h2>
+        <div id="payBillInfo"></div>
+        <label>Payment Amount ($)</label>
+        <input type="number" id="payAmount" step="0.01" min="1" />
+        <label>Payment Method</label>
+        <select id="payMethod">
+          <option value="credit_card">Credit Card</option>
+          <option value="debit_card">Debit Card</option>
+          <option value="hsa">HSA</option>
+          <option value="fsa">FSA</option>
+          <option value="bank_transfer">Bank Transfer</option>
+        </select>
+        <div id="stripeCard" class="stripe-card-placeholder">
+          <p>💳 Card processing powered by Stripe (demo mode)</p>
+        </div>
+        <div class="modal-actions">
+          <button onclick="submitPayment()" class="btn btn-primary">Pay Now</button>
+          <button onclick="closeModal('payModal')" class="btn btn-outline">Cancel</button>
+        </div>
+
+        <hr />
+        <h3>Set Up Payment Plan</h3>
+        <label>Number of Months</label>
+        <input type="number" id="planMonths" min="2" max="24" value="3" />
+        <div id="planPreview"></div>
+        <button onclick="setupPlan()" class="btn btn-outline">Set Up Plan</button>
+
+        <button onclick="closeModal('payModal')" class="modal-close">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-fab" onclick="window.location.href='/chat'" title="24/7 AI Assistant">
+    💬<span class="fab-badge">24/7</span>
+  </div>
+
+  <script src="/static/portal.js"></script>
+  <script>
+    let currentBill = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBills();
+    });
+
+    async function loadBills() {
+      const token = localStorage.getItem('hc_token');
+      if (!token) {
+        document.getElementById('billsList').innerHTML = '<p>Please <a href="#" onclick="showLoginModal()">sign in</a> to view bills.</p>';
+        return;
+      }
+      const r = await fetch('/api/billing/bills', {headers: {'Authorization': `Bearer ${token}`}});
+      const bills = await r.json();
+      const div = document.getElementById('billsList');
+      if (!bills.length) { div.innerHTML = '<p>No bills on file.</p>'; return; }
+      div.innerHTML = bills.map(b => `
+        <div class="bill-card status-${b.status}">
+          <div class="bill-header">
+            <span class="bill-id">Bill #${b.id}</span>
+            <span class="bill-status badge-${b.status}">${b.status.replace('_',' ')}</span>
+          </div>
+          <div class="bill-amounts">
+            <div class="amount-row"><span>Total</span><span>$${b.total.toFixed(2)}</span></div>
+            ${b.insurance_adjustment ? `<div class="amount-row green"><span>Insurance Covered</span><span>-$${b.insurance_adjustment.toFixed(2)}</span></div>` : ''}
+            <div class="amount-row bold"><span>Balance Due</span><span>$${b.balance_due.toFixed(2)}</span></div>
+          </div>
+          ${b.due_date ? `<div class="bill-due">Due: ${new Date(b.due_date).toLocaleDateString()}</div>` : ''}
+          ${b.is_payment_plan ? `<div class="plan-info">📆 Payment plan: $${b.payment_plan_monthly_amount?.toFixed(2)}/month</div>` : ''}
+          <div class="bill-actions">
+            ${b.balance_due > 0 ? `<button onclick="openPay(${JSON.stringify(b).replace(/"/g,'&quot;')})" class="btn btn-primary btn-sm">Pay Now</button>` : ''}
+            <a href="/api/billing/bills/${b.id}/receipt" class="btn btn-outline btn-sm" target="_blank">📄 Receipt</a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openPay(bill) {
+      currentBill = bill;
+      document.getElementById('payBillInfo').innerHTML = `
+        <div class="pay-summary">
+          <strong>Bill #${bill.id}</strong> – Balance Due: <strong>$${bill.balance_due.toFixed(2)}</strong>
+        </div>`;
+      document.getElementById('payAmount').value = bill.balance_due.toFixed(2);
+      document.getElementById('payAmount').max = bill.balance_due;
+      document.getElementById('planPreview').innerHTML = '';
+      showModal('payModal');
+    }
+
+    document.getElementById && document.getElementById('planMonths') && document.getElementById('planMonths').addEventListener('input', () => {
+      if (!currentBill) return;
+      const months = parseInt(document.getElementById('planMonths').value) || 1;
+      const monthly = (currentBill.balance_due / months).toFixed(2);
+      document.getElementById('planPreview').innerHTML = `Monthly payment: <strong>$${monthly}</strong> × ${months} months`;
+    });
+
+    async function submitPayment() {
+      const token = localStorage.getItem('hc_token');
+      if (!token) { showLoginModal(); return; }
+      const amount = parseFloat(document.getElementById('payAmount').value);
+      const method = document.getElementById('payMethod').value;
+      if (!amount || amount <= 0) { alert('Please enter a valid amount.'); return; }
+      try {
+        const r = await fetch('/api/billing/payments', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+          body: JSON.stringify({bill_id: currentBill.id, amount, method}),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || 'Payment failed');
+        closeModal('payModal');
+        alert(`✅ Payment of $${amount.toFixed(2)} processed!\nStatus: ${data.status}`);
+        loadBills();
+      } catch(e) {
+        alert('Payment error: ' + e.message);
+      }
+    }
+
+    async function setupPlan() {
+      const token = localStorage.getItem('hc_token');
+      if (!token) { showLoginModal(); return; }
+      const months = parseInt(document.getElementById('planMonths').value);
+      const r = await fetch('/api/billing/payments/plan', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+        body: JSON.stringify({bill_id: currentBill.id, months}),
+      });
+      const data = await r.json();
+      if (!r.ok) { alert(data.detail || 'Error'); return; }
+      closeModal('payModal');
+      alert(`✅ Payment plan set up!\n$${data.monthly_payment}/month for ${months} months`);
+      loadBills();
+    }
+
+    async function loadPaymentHistory() {
+      const token = localStorage.getItem('hc_token');
+      if (!token) { document.getElementById('paymentHistory').innerHTML = '<p>Please sign in.</p>'; return; }
+      const r = await fetch('/api/billing/payments', {headers: {'Authorization': `Bearer ${token}`}});
+      const payments = await r.json();
+      const div = document.getElementById('paymentHistory');
+      if (!payments.length) { div.innerHTML = '<p>No payments found.</p>'; return; }
+      div.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Bill</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Receipt</th></tr></thead>
+          <tbody>
+            ${payments.map(p => `
+              <tr>
+                <td>#${p.id}</td>
+                <td>#${p.bill_id}</td>
+                <td>$${p.amount.toFixed(2)}</td>
+                <td>${p.method.replace('_',' ')}</td>
+                <td><span class="badge-${p.status}">${p.status}</span></td>
+                <td>${p.processed_at ? new Date(p.processed_at).toLocaleDateString() : '–'}</td>
+                <td>${p.receipt_url ? `<a href="${p.receipt_url}" target="_blank">View</a>` : '–'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      event.target && event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      if (tab === 'history') loadPaymentHistory();
+    }
+  </script>
+</body>
+</html>
