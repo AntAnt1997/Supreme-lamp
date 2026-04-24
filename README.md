@@ -172,6 +172,71 @@ pytest tests/ -v
 - **APScheduler** - Task scheduling
 - **cryptography** - API key encryption
 
+## Contributing
+
+Contributions are welcome! Please follow these guidelines to keep the codebase healthy and CI green.
+
+### Development Setup
+
+```bash
+git clone https://github.com/AntAnt1997/Supreme-lamp.git
+cd Supreme-lamp
+
+# Option A – pip
+pip install -r requirements.txt
+pip install pytest pytest-asyncio flake8
+
+# Option B – conda
+conda env update --file environment.yml --name base
+conda activate base
+```
+
+Copy the example environment file and leave it in `paper` mode during development:
+
+```bash
+cp .env.example .env
+# TRADING_MODE=paper  (default – no real money at risk)
+```
+
+### Running Tests
+
+```bash
+pytest tests/ -v
+```
+
+All tests must pass before submitting a pull request.
+
+### Code Style
+
+The project uses [flake8](https://flake8.pycqa.org/) for linting:
+
+```bash
+flake8 bot/ tests/ run_dashboard.py
+```
+
+Key conventions:
+- **Python 3.11+** — use `datetime.now(timezone.utc)` instead of `datetime.utcnow()`
+- Remove unused imports before committing
+- Keep line length ≤ 120 characters (E501 is configured)
+- Avoid single-letter variable names (`l`, `O`, `I`) — they are flagged by E741
+
+### Pull Request Process
+
+1. **Fork** the repository and create a feature branch from `main`:
+   ```bash
+   git checkout -b feat/my-new-feature
+   ```
+2. **Write or update tests** for any logic you change.
+3. **Lint and test** locally — CI will reject PRs with failures.
+4. **Open a pull request** against `main` with a clear title and description explaining *what* changed and *why*.
+5. Address any review feedback; a maintainer will merge once approved.
+
+### Reporting Issues
+
+- Search [existing issues](https://github.com/AntAnt1997/Supreme-lamp/issues) before opening a new one.
+- Include your Python version, OS, and a minimal reproduction case.
+- For security vulnerabilities, please follow the process in [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
 ## Risk Disclaimer
 
 **WARNING: Cryptocurrency trading involves substantial risk of financial loss.**
