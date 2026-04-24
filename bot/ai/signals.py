@@ -1,10 +1,7 @@
 """AI signal generation - combines technical analysis and ML predictions."""
 
 import logging
-from datetime import datetime
 from typing import Optional
-
-import pandas as pd
 
 from bot.ai.feature_engine import FeatureEngine
 from bot.ai.model import TradingModel

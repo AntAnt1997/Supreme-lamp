@@ -18,15 +18,14 @@ import logging
 import signal
 import sys
 import threading
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 from cryptography.fernet import Fernet
 
 from config.settings import settings
-from bot.database.db import init_db, get_session
+from bot.database.db import init_db
 from bot.exchange.client import ExchangeClient
 from bot.exchange.paper_trader import PaperTrader
 from bot.exchange.order_manager import OrderManager
@@ -343,7 +342,7 @@ def _setup_scheduler(exchange_client, risk_manager, portfolio_tracker,
         args=[ai_trader, "AI"],
         id="ai_trading",
         max_instances=1,
-        next_run_time=datetime.utcnow(),  # Run immediately on start
+        next_run_time=datetime.now(timezone.utc),  # Run immediately on start
     )
 
     # Copy Trading - poll every 30 seconds

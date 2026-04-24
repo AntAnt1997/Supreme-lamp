@@ -2,7 +2,6 @@
 
 import logging
 import pandas as pd
-import numpy as np
 from ta import trend, momentum, volatility, volume
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,6 @@
 
 import pytest
 import pandas as pd
-import numpy as np
 
 from bot.ai.feature_engine import FeatureEngine
 from bot.ai.model import TradingModel

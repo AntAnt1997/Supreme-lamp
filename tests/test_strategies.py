@@ -1,6 +1,5 @@
 """Tests for trading strategies."""
 
-import pytest
 from bot.strategies.signal_follower import SignalFollower
 
 

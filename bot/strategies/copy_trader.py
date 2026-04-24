@@ -115,16 +115,16 @@ class CopyTrader(BaseStrategy):
             leaders = session.query(CopyLeader).all()
             return [
                 {
-                    "id": l.id,
-                    "external_id": l.external_id,
-                    "label": l.label,
-                    "allocation_pct": l.allocation_pct,
-                    "is_active": l.is_active,
-                    "total_pnl": l.total_pnl,
-                    "num_trades": l.num_trades_copied,
-                    "last_polled": l.last_polled_at.isoformat() if l.last_polled_at else None,
+                    "id": ldr.id,
+                    "external_id": ldr.external_id,
+                    "label": ldr.label,
+                    "allocation_pct": ldr.allocation_pct,
+                    "is_active": ldr.is_active,
+                    "total_pnl": ldr.total_pnl,
+                    "num_trades": ldr.num_trades_copied,
+                    "last_polled": ldr.last_polled_at.isoformat() if ldr.last_polled_at else None,
                 }
-                for l in leaders
+                for ldr in leaders
             ]
         finally:
             session.close()
