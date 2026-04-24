@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -35,7 +35,7 @@ def sample_ohlcv():
     n = 200
     base_price = 50000
     timestamps = [
-        int((datetime.utcnow() - timedelta(hours=n - i)).timestamp() * 1000)
+        int((datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=n - i)).timestamp() * 1000)
         for i in range(n)
     ]
 
@@ -98,7 +98,7 @@ class MockExchangeClient:
         price = self._prices.get(symbol, 50000)
         data = []
         for i in range(limit):
-            ts = int((datetime.utcnow() - timedelta(hours=limit - i)).timestamp() * 1000)
+            ts = int((datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=limit - i)).timestamp() * 1000)
             c = price * (1 + np.random.normal(0, 0.005))
             h = c * 1.003
             l = c * 0.997

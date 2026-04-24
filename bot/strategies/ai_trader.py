@@ -1,7 +1,7 @@
 """AI autonomous trading strategy - uses ML model and technical analysis."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from bot.strategies.base import BaseStrategy
@@ -94,7 +94,7 @@ class AITrader(BaseStrategy):
                     logger.error("Failed to train model for %s %s: %s", symbol, timeframe, e)
                     results[f"{symbol}_{timeframe}"] = {"error": str(e)}
 
-        self._last_train_time = datetime.utcnow()
+        self._last_train_time = datetime.now(timezone.utc).replace(tzinfo=None)
         return results
 
     def get_status(self) -> dict:
@@ -221,7 +221,7 @@ class AITrader(BaseStrategy):
             self.train_models()
             return
 
-        elapsed = datetime.utcnow() - self._last_train_time
+        elapsed = datetime.now(timezone.utc).replace(tzinfo=None) - self._last_train_time
         if elapsed > timedelta(hours=self.retrain_hours):
             logger.info("Retraining models (last trained %s ago)", elapsed)
             self.train_models()
