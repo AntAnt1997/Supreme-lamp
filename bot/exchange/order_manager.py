@@ -1,7 +1,7 @@
 """Order manager - routes orders through exchange client or paper trader with risk checks."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -157,7 +157,7 @@ class OrderManager:
 
             # Update position
             position.is_open = False
-            position.closed_at = datetime.utcnow()
+            position.closed_at = datetime.now(timezone.utc).replace(tzinfo=None)
             position.realized_pnl = pnl
             position.current_price = fill_price
 
@@ -266,7 +266,7 @@ class OrderManager:
                     # Full close
                     existing.realized_pnl = realized_pnl
                     existing.is_open = False
-                    existing.closed_at = datetime.utcnow()
+                    existing.closed_at = datetime.now(timezone.utc).replace(tzinfo=None)
                     existing.current_price = fill_price
 
                     # Handle reversal: excess amount opens a new opposite position

@@ -23,7 +23,7 @@ import random
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # ── Setup path + logging ─────────────────────────────
 sys.path.insert(0, os.path.dirname(__file__))
@@ -59,7 +59,7 @@ STRATEGIES = ["ai", "copy", "signal", "manual"]
 def seed_database(exchange: LocalPaperExchange):
     """Populate the database with realistic historical data."""
     session = get_session()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     # ── 1.  Portfolio snapshots (30 days) for equity chart ──
     balance = 10000.0

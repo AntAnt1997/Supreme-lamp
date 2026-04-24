@@ -10,7 +10,7 @@ import random
 import time
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -173,7 +173,7 @@ class LocalPaperExchange:
             "fee": {"cost": fee, "currency": quote},
             "status": "closed",
             "timestamp": int(time.time() * 1000),
-            "datetime": datetime.utcnow().isoformat(),
+            "datetime": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         }
         self.orders.append(order)
         logger.info(

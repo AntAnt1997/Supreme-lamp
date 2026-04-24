@@ -1,7 +1,7 @@
 """Copy trading strategy - monitors and replicates trades from top traders."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from bot.strategies.base import BaseStrategy
@@ -229,7 +229,7 @@ class CopyTrader(BaseStrategy):
                         f"Leader traded: {trade.get('amount')} @ {price}"
                     )
 
-        leader.last_polled_at = datetime.utcnow()
+        leader.last_polled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         return orders
 
     def _calculate_copy_amount(self, leader_trade: dict, leader: CopyLeader) -> float:

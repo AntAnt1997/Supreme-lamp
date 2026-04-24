@@ -1,7 +1,7 @@
 """Risk management system - enforces all trading risk rules."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from bot.database.db import get_session
@@ -148,7 +148,7 @@ class RiskManager:
         """Update internal state after a trade executes."""
         if trade_pnl is not None and trade_pnl < 0:
             self._consecutive_losses += 1
-            self._last_loss_time = datetime.utcnow()
+            self._last_loss_time = datetime.now(timezone.utc).replace(tzinfo=None)
             logger.info(
                 "Consecutive losses: %d/%d",
                 self._consecutive_losses, self.cooldown_after_losses,
@@ -299,7 +299,7 @@ class RiskManager:
 
     def _get_daily_pnl(self, session) -> Optional[float]:
         """Get today's total realized PnL."""
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
         trades = (
             session.query(Trade)
             .filter(Trade.created_at >= today, Trade.pnl.isnot(None))
@@ -330,7 +330,7 @@ class RiskManager:
         if self._last_loss_time is None:
             return False
         cooldown_end = self._last_loss_time + timedelta(minutes=self.cooldown_minutes)
-        if datetime.utcnow() < cooldown_end:
+        if datetime.now(timezone.utc).replace(tzinfo=None) < cooldown_end:
             return True
         # Cooldown expired, reset
         self._consecutive_losses = 0

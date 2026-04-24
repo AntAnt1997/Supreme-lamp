@@ -1,7 +1,7 @@
 """Portfolio tracking and PnL calculation."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from bot.database.db import get_session
 from bot.database.models import Position, Trade, PortfolioSnapshot
@@ -155,7 +155,7 @@ class PortfolioTracker:
         """Get portfolio PnL history from snapshots."""
         session = get_session()
         try:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
             snapshots = (
                 session.query(PortfolioSnapshot)
                 .filter(PortfolioSnapshot.timestamp >= since)
@@ -246,7 +246,7 @@ class PortfolioTracker:
 
     def _get_daily_pnl(self, session) -> float:
         """Get today's realized PnL."""
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
         trades = (
             session.query(Trade)
             .filter(Trade.created_at >= today, Trade.pnl.isnot(None))

@@ -1,11 +1,16 @@
 """SQLAlchemy ORM models for the trading bot database."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Index,
     create_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+
+def _utc_now() -> datetime:
+    """Return current UTC time as a timezone-naive datetime (database-compatible)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Base(DeclarativeBase):
@@ -31,7 +36,7 @@ class Trade(Base):
     pnl = Column(Float, nullable=True)  # Realized PnL (set on close)
     is_paper = Column(Boolean, default=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=_utc_now, index=True)
     closed_at = Column(DateTime, nullable=True)
 
     # Foreign keys for traceability
@@ -62,7 +67,7 @@ class Position(Base):
     strategy = Column(String(20), nullable=False)
     is_paper = Column(Boolean, default=True)
     is_open = Column(Boolean, default=True, index=True)
-    opened_at = Column(DateTime, default=datetime.utcnow)
+    opened_at = Column(DateTime, default=_utc_now)
     closed_at = Column(DateTime, nullable=True)
 
     __table_args__ = (
@@ -86,7 +91,7 @@ class Signal(Base):
     ml_score = Column(Float, nullable=True)  # ML model sub-score
     metadata_json = Column(Text, nullable=True)  # Extra signal data as JSON
     acted_on = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=_utc_now, index=True)
 
     # Relationship to trades
     trades = relationship("Trade", backref="signal", foreign_keys=[Trade.signal_id])
@@ -106,7 +111,7 @@ class PortfolioSnapshot(Base):
     daily_pnl = Column(Float, default=0.0)  # Today's PnL
     unrealized_pnl = Column(Float, default=0.0)  # Current unrealized PnL
     num_open_positions = Column(Integer, default=0)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=_utc_now, index=True)
 
     def __repr__(self):
         return f"<Snapshot balance={self.total_balance:.2f} pnl={self.daily_pnl:.2f}>"
@@ -123,7 +128,7 @@ class CopyLeader(Base):
     last_polled_at = Column(DateTime, nullable=True)
     total_pnl = Column(Float, default=0.0)  # PnL from copying this leader
     num_trades_copied = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
     def __repr__(self):
         return f"<CopyLeader {self.label or self.external_id}>"
@@ -141,7 +146,7 @@ class Withdrawal(Base):
     status = Column(String(20), default="pending")  # pending/processing/completed/failed
     fee = Column(Float, default=0.0)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
     completed_at = Column(DateTime, nullable=True)
 
     def __repr__(self):
@@ -153,7 +158,7 @@ class AppSetting(Base):
 
     key = Column(String(100), primary_key=True)
     value = Column(Text, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now)
 
     def __repr__(self):
         return f"<AppSetting {self.key}={self.value[:50]}>"

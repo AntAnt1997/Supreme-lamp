@@ -47,7 +47,7 @@ class TradingModel:
             Dict with training metrics.
         """
         # Align X and y, drop NaN
-        combined = pd.concat([X, y.rename("label")], axis=1).dropna()
+        combined = pd.concat([X, y.rename("label")], axis=1, sort=False).dropna()
         X_clean = combined.drop("label", axis=1)
         y_clean = combined["label"]
 
