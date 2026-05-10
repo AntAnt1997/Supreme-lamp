@@ -18,7 +18,10 @@ export default function Home() {
     return tasks.filter((task) => !task.done);
   }, [showCompleted, tasks]);
 
-  const completedCount = tasks.filter((task) => task.done).length;
+  const completedCount = useMemo(
+    () => tasks.filter((task) => task.done).length,
+    [tasks],
+  );
 
   const addTask = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,6 +48,11 @@ export default function Home() {
   const removeTask = (id: number) => {
     setTasks((current) => current.filter((task) => task.id !== id));
   };
+
+  const emptyStateMessage =
+    tasks.length > 0 && !showCompleted && visibleTasks.length === 0
+      ? 'All tasks are completed. Turn on "Show completed" to view them.'
+      : "No tasks yet. Add one above to get started.";
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -114,7 +122,7 @@ export default function Home() {
 
         {visibleTasks.length === 0 && (
           <p className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
-            No tasks to show.
+            {emptyStateMessage}
           </p>
         )}
       </main>
