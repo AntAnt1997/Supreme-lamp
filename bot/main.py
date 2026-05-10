@@ -138,7 +138,20 @@ def main():
         risk_manager=risk_manager,
         notifier=notifier,
         trade_ratio=settings.copy_trading.trade_ratio,
+        min_trade_usdt=settings.copy_trading.min_trade_usdt,
+        max_trade_usdt=settings.copy_trading.max_trade_usdt,
+        auto_approve=settings.copy_trading.auto_approve,
     )
+
+    # Seed any configured trader IDs as copy leaders
+    for tid in settings.copy_trading.trader_ids:
+        if tid:
+            try:
+                copy_trader.add_leader(external_id=tid, label=tid)
+                logger.info("Registered copy leader: %s", tid)
+            except Exception:
+                # Leader may already exist (unique constraint) – that's fine
+                pass
 
     signal_follower = SignalFollower(
         order_manager=order_manager,

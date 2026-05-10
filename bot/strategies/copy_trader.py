@@ -1,7 +1,8 @@
 """Copy trading strategy - monitors and replicates trades from top traders."""
 
 import logging
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from bot.strategies.base import BaseStrategy
@@ -19,7 +20,7 @@ class CopyTrader(BaseStrategy):
     1. Poll each active leader's recent trades via exchange API
     2. Detect new trades not yet replicated
     3. Calculate proportional position size based on allocation_pct
-    4. Execute trades through risk manager
+    4. Queue or execute trades based on auto_approve flag
     5. Track all copied trades with leader reference
     """
 
@@ -31,14 +32,22 @@ class CopyTrader(BaseStrategy):
         notifier=None,
         trade_ratio: float = 0.1,
         min_trade_usdt: float = 10.0,
+        max_trade_usdt: float = 5000.0,
+        auto_approve: bool = False,
     ):
         super().__init__("copy", order_manager, risk_manager, notifier)
         self.exchange = exchange_client
         self.trade_ratio = trade_ratio
         self.min_trade_usdt = min_trade_usdt
+        self.max_trade_usdt = max_trade_usdt
+        self.auto_approve = auto_approve
 
         # Cache of seen trade IDs per leader to avoid duplicates
         self._seen_trades: dict[str, set] = {}
+
+        # Pending trades awaiting manual approval (when auto_approve=False)
+        # Each entry: {id, leader_id, label, symbol, side, amount, price, value, detected_at}
+        self._pending_trades: list[dict] = []
 
     def run(self) -> list:
         """Execute one copy trading cycle - check all leaders for new trades."""
@@ -69,6 +78,133 @@ class CopyTrader(BaseStrategy):
             session.close()
 
         return orders
+
+    def get_config(self) -> dict:
+        """Return current copy trading configuration."""
+        return {
+            "trade_ratio": self.trade_ratio,
+            "min_trade_usdt": self.min_trade_usdt,
+            "max_trade_usdt": self.max_trade_usdt,
+            "auto_approve": self.auto_approve,
+        }
+
+    def update_config(
+        self,
+        trade_ratio: Optional[float] = None,
+        min_trade_usdt: Optional[float] = None,
+        max_trade_usdt: Optional[float] = None,
+        auto_approve: Optional[bool] = None,
+    ) -> dict:
+        """Update copy trading configuration at runtime."""
+        if trade_ratio is not None:
+            self.trade_ratio = max(0.01, min(1.0, trade_ratio))
+        if min_trade_usdt is not None:
+            self.min_trade_usdt = max(0.0, min_trade_usdt)
+        if max_trade_usdt is not None:
+            self.max_trade_usdt = max(0.0, max_trade_usdt)
+        if auto_approve is not None:
+            self.auto_approve = auto_approve
+        logger.info(
+            "Copy trading config updated: ratio=%.2f min=$%.0f max=$%.0f auto=%s",
+            self.trade_ratio, self.min_trade_usdt, self.max_trade_usdt, self.auto_approve,
+        )
+        return self.get_config()
+
+    def get_pending_trades(self) -> list[dict]:
+        """Return trades awaiting manual approval."""
+        return list(self._pending_trades)
+
+    def approve_trade(self, pending_id: str) -> Optional[dict]:
+        """Approve and execute a pending copy trade."""
+        entry = self._pop_pending(pending_id)
+        if not entry:
+            return None
+        order = self._place_order(
+            symbol=entry["symbol"],
+            side=entry["side"],
+            amount=entry["amount"],
+            leader_id=entry["leader_id"],
+        )
+        if order and self.notifier:
+            self.notifier.send(
+                f"✅ COPY TRADE EXECUTED\n"
+                f"{entry['side'].upper()} {entry['amount']:.6f} {entry['symbol']}\n"
+                f"Leader: {entry['label']}"
+            )
+        return order
+
+    def reject_trade(self, pending_id: str) -> bool:
+        """Reject and discard a pending copy trade."""
+        entry = self._pop_pending(pending_id)
+        if entry:
+            logger.info("Rejected pending copy trade %s (%s %s)", pending_id, entry["side"], entry["symbol"])
+            return True
+        return False
+
+    def _pop_pending(self, pending_id: str) -> Optional[dict]:
+        for i, entry in enumerate(self._pending_trades):
+            if entry["id"] == pending_id:
+                return self._pending_trades.pop(i)
+        return None
+
+    def get_copy_stats(self, days: int = 7) -> dict:
+        """Return copy trading statistics for the last N days."""
+        session = get_session()
+        try:
+            cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+            trades = (
+                session.query(Trade)
+                .filter(Trade.strategy == "copy", Trade.created_at >= cutoff)
+                .all()
+            )
+            num_trades = len(trades)
+            closed = [t for t in trades if t.pnl is not None]
+            wins = [t for t in closed if t.pnl > 0]
+            total_pnl = sum(t.pnl for t in closed)
+            total_volume = sum((t.cost or 0) for t in trades)
+            win_rate = (len(wins) / len(closed) * 100) if closed else 0.0
+            return {
+                "period_days": days,
+                "num_trades": num_trades,
+                "closed_trades": len(closed),
+                "wins": len(wins),
+                "win_rate_pct": round(win_rate, 1),
+                "total_pnl": round(total_pnl, 2),
+                "total_volume_usdt": round(total_volume, 2),
+            }
+        finally:
+            session.close()
+
+    def get_copy_history(self, limit: int = 50, offset: int = 0) -> list[dict]:
+        """Return recent copy trades."""
+        session = get_session()
+        try:
+            trades = (
+                session.query(Trade)
+                .filter_by(strategy="copy")
+                .order_by(Trade.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            return [
+                {
+                    "id": t.id,
+                    "symbol": t.symbol,
+                    "side": t.side,
+                    "amount": t.amount,
+                    "price": t.average_price,
+                    "cost": t.cost,
+                    "pnl": t.pnl,
+                    "status": t.status,
+                    "leader_id": t.leader_id,
+                    "created_at": t.created_at.isoformat() if t.created_at else None,
+                    "closed_at": t.closed_at.isoformat() if t.closed_at else None,
+                }
+                for t in trades
+            ]
+        finally:
+            session.close()
 
     def add_leader(
         self,
@@ -200,33 +336,71 @@ class CopyTrader(BaseStrategy):
 
             symbol = trade.get("symbol", "")
             side = trade.get("side", "")
+            price = trade.get("price", 0)
+            trade_value = our_amount * price
 
             # Verify minimum trade size
-            price = trade.get("price", 0)
-            if our_amount * price < self.min_trade_usdt:
+            if trade_value < self.min_trade_usdt:
                 logger.debug(
                     "Skipping copy trade: value %.2f < min %.2f",
-                    our_amount * price, self.min_trade_usdt,
+                    trade_value, self.min_trade_usdt,
                 )
                 continue
 
-            # Place the copied trade
-            order = self._place_order(
-                symbol=symbol,
-                side=side,
-                amount=our_amount,
-                leader_id=leader.external_id,
-            )
+            # Cap at maximum trade size
+            if self.max_trade_usdt > 0 and trade_value > self.max_trade_usdt:
+                our_amount = self.max_trade_usdt / price if price > 0 else our_amount
+                trade_value = our_amount * price
+                logger.debug(
+                    "Capping copy trade to max $%.0f: %.6f %s",
+                    self.max_trade_usdt, our_amount, symbol,
+                )
 
-            if order:
-                orders.append(order)
-                leader.num_trades_copied += 1
+            if self.auto_approve:
+                # Execute immediately
+                order = self._place_order(
+                    symbol=symbol,
+                    side=side,
+                    amount=our_amount,
+                    leader_id=leader.external_id,
+                )
+                if order:
+                    orders.append(order)
+                    leader.num_trades_copied += 1
+
+                    if self.notifier:
+                        self.notifier.send(
+                            f"✅ COPY TRADE EXECUTED\n"
+                            f"Leader: {leader.label}\n"
+                            f"{side.upper()} {our_amount:.6f} {symbol}\n"
+                            f"Value: ${trade_value:,.2f}"
+                        )
+            else:
+                # Queue for manual approval
+                pending = {
+                    "id": str(uuid.uuid4()),
+                    "leader_id": leader.external_id,
+                    "label": leader.label,
+                    "symbol": symbol,
+                    "side": side,
+                    "amount": our_amount,
+                    "price": price,
+                    "value": trade_value,
+                    "detected_at": datetime.utcnow().isoformat(),
+                }
+                self._pending_trades.append(pending)
+                logger.info(
+                    "Pending approval: %s %s %.6f %s ($%.2f)",
+                    side.upper(), our_amount, symbol, trade_value, trade_value,
+                )
 
                 if self.notifier:
                     self.notifier.send(
-                        f"📋 COPY TRADE from {leader.label}\n"
-                        f"{side.upper()} {our_amount} {symbol}\n"
-                        f"Leader traded: {trade.get('amount')} @ {price}"
+                        f"📋 COPY TRADE DETECTED\n\n"
+                        f"Original Trader: {leader.label}\n"
+                        f"Trade: {side.upper()} {symbol}\n"
+                        f"Value: ${trade_value:,.2f}\n\n"
+                        f"⏳ Awaiting approval"
                     )
 
         leader.last_polled_at = datetime.utcnow()

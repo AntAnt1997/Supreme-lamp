@@ -98,6 +98,15 @@ class CopyTradingConfig:
     trade_ratio: float = field(
         default_factory=lambda: _get_env_float("COPY_TRADE_RATIO", 0.1)
     )
+    min_trade_usdt: float = field(
+        default_factory=lambda: _get_env_float("COPY_MIN_TRADE_USDT", 50.0)
+    )
+    max_trade_usdt: float = field(
+        default_factory=lambda: _get_env_float("COPY_MAX_TRADE_USDT", 5000.0)
+    )
+    auto_approve: bool = field(
+        default_factory=lambda: _get_env_bool("COPY_AUTO_APPROVE", False)
+    )
     poll_interval_sec: int = field(
         default_factory=lambda: _get_env_int("COPY_POLL_INTERVAL_SEC", 30)
     )
