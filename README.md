@@ -4,7 +4,7 @@ A production-grade AI-powered cryptocurrency trading bot that combines **copy tr
 
 ## Features
 
-- **Paper Trading Mode** - Test strategies with simulated $10,000 USDT using real market data before going live
+- **Real Trading Mode** - Test strategies with simulated $10,000 USDT using real market data before going live
 - **Live Trading Mode** - Execute real trades on Binance with your API keys
 - **Copy Trading** - Monitor and automatically replicate trades from successful traders
 - **Telegram Signal Following** - Parse and execute trading signals from Telegram channels
