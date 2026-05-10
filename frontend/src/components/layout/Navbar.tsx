@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X, CandlestickChart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
@@ -40,10 +41,19 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-white/10">
-              View Docs
-            </Button>
-            <Button size="sm">Deploy Stack</Button>
+            <a href="https://github.com/AntAnt1997/Supreme-lamp#readme" target="_blank" rel="noreferrer">
+              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-white/10">
+                View Docs
+              </Button>
+            </a>
+            <a href="#deployment">
+              <Button size="sm">Deploy Stack</Button>
+            </a>
+            <Link to="/app">
+              <Button size="sm" variant="outline" className="text-white border-white/20 hover:bg-white/10">
+                Launch App
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile toggle */}
@@ -71,10 +81,19 @@ export default function Navbar() {
             </a>
           ))}
           <div className="pt-3 flex flex-col gap-2">
-            <Button variant="ghost" size="sm" className="w-full text-gray-300 hover:text-white hover:bg-white/10 justify-center">
-              View Docs
-            </Button>
-            <Button size="sm" className="w-full">Deploy Stack</Button>
+            <a href="https://github.com/AntAnt1997/Supreme-lamp#readme" target="_blank" rel="noreferrer">
+              <Button variant="ghost" size="sm" className="w-full text-gray-300 hover:text-white hover:bg-white/10 justify-center">
+                View Docs
+              </Button>
+            </a>
+            <a href="#deployment" onClick={() => setIsOpen(false)}>
+              <Button size="sm" className="w-full">Deploy Stack</Button>
+            </a>
+            <Link to="/app" onClick={() => setIsOpen(false)}>
+              <Button size="sm" variant="outline" className="w-full text-white border-white/20 hover:bg-white/10">
+                Launch App
+              </Button>
+            </Link>
           </div>
         </div>
       )}

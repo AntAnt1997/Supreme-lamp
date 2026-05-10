@@ -1,4 +1,5 @@
 import { Brain } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -14,9 +15,9 @@ export default function NotFound() {
         <p className="text-xl text-gray-400 mb-8">
           Oops — this page doesn't exist. Let's get you back on track.
         </p>
-        <Button size="lg" onClick={() => (window.location.href = "/")}>
-          Go to Home
-        </Button>
+        <Link to="/">
+          <Button size="lg">Go to Home</Button>
+        </Link>
       </div>
     </div>
   );
