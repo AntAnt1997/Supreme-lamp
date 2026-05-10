@@ -27,12 +27,16 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button size="lg" className="gap-2 bg-blue-600 hover:bg-blue-500">
-            Review Components <ArrowRight className="h-5 w-5" />
-          </Button>
-          <Button size="lg" variant="outline">
-            Open Deployment Guide
-          </Button>
+          <a href="#components">
+            <Button size="lg" className="gap-2 bg-blue-600 hover:bg-blue-500">
+              Review Components <ArrowRight className="h-5 w-5" />
+            </Button>
+          </a>
+          <a href="#deployment">
+            <Button size="lg" variant="outline">
+              Open Deployment Guide
+            </Button>
+          </a>
         </div>
 
         {/* Trust badges */}
