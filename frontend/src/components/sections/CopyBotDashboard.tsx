@@ -153,11 +153,6 @@ export default function CopyBotDashboard() {
     return () => clearInterval(id);
   }, []); // intentionally empty — fetchAll is fully self-contained
 
-  const refresh = () => {
-    // Trigger a one-shot re-poll by resetting and re-mounting would be complex;
-    // instead we just let the 5-second interval handle it naturally.
-  };
-
   const toggleBot = async () => {
     if (!botStatus) return;
     const action = botStatus.strategies.copy ? "stop" : "start";
@@ -194,9 +189,6 @@ export default function CopyBotDashboard() {
     await apiFetch(`/positions/${posId}/close`, { method: "POST" });
     setPositions((prev) => prev.filter((p) => p.id !== posId));
   };
-
-  // Suppress lint warning — refresh is intentionally a no-op placeholder
-  void refresh;
 
   const isActive = botStatus?.strategies.copy ?? false;
 

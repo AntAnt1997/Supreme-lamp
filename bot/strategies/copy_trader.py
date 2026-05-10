@@ -386,12 +386,12 @@ class CopyTrader(BaseStrategy):
                     "amount": our_amount,
                     "price": price,
                     "value": trade_value,
-                    "detected_at": datetime.utcnow().isoformat(),
+                    "detected_at": datetime.now(timezone.utc).isoformat(),
                 }
                 self._pending_trades.append(pending)
                 logger.info(
                     "Pending approval: %s %s %.6f %s ($%.2f)",
-                    side.upper(), our_amount, symbol, trade_value, trade_value,
+                    side.upper(), our_amount, symbol, trade_value,
                 )
 
                 if self.notifier:
@@ -403,7 +403,7 @@ class CopyTrader(BaseStrategy):
                         f"⏳ Awaiting approval"
                     )
 
-        leader.last_polled_at = datetime.utcnow()
+        leader.last_polled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         return orders
 
     def _calculate_copy_amount(self, leader_trade: dict, leader: CopyLeader) -> float:
