@@ -173,6 +173,70 @@ def create_dashboard(
             return {"status": "removed"}
         raise HTTPException(400, "Copy trading not available")
 
+    @app.get("/api/copy-trading/config")
+    async def get_copy_config():
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        return copy_trader.get_config()
+
+    @app.patch("/api/copy-trading/config")
+    async def update_copy_config(request: Request):
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        data = await request.json()
+        try:
+            updated = copy_trader.update_config(
+                trade_ratio=data.get("trade_ratio"),
+                min_trade_usdt=data.get("min_trade_usdt"),
+                max_trade_usdt=data.get("max_trade_usdt"),
+                auto_approve=data.get("auto_approve"),
+            )
+            return updated
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+    @app.get("/api/copy-trading/pending")
+    async def get_pending_trades():
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        return copy_trader.get_pending_trades()
+
+    @app.post("/api/copy-trading/pending/{pending_id}/approve")
+    async def approve_pending(pending_id: str):
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        order = copy_trader.approve_trade(pending_id)
+        if order is None:
+            raise HTTPException(404, "Pending trade not found")
+        return order
+
+    @app.post("/api/copy-trading/pending/{pending_id}/reject")
+    async def reject_pending(pending_id: str):
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        ok = copy_trader.reject_trade(pending_id)
+        if not ok:
+            raise HTTPException(404, "Pending trade not found")
+        return {"status": "rejected"}
+
+    @app.get("/api/copy-trading/stats")
+    async def copy_trading_stats(days: int = 7):
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        try:
+            return copy_trader.get_copy_stats(days=days)
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+    @app.get("/api/copy-trading/history")
+    async def copy_trading_history(limit: int = 50, offset: int = 0):
+        if not copy_trader:
+            raise HTTPException(400, "Copy trading not available")
+        try:
+            return copy_trader.get_copy_history(limit=limit, offset=offset)
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
     # ── Positions API ─────────────────────────────────
 
     @app.post("/api/positions/{position_id}/close")
