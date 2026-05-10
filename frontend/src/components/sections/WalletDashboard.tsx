@@ -51,7 +51,7 @@ type PortfolioSummary = {
 
 // ── API helpers ────────────────────────────────────────────────────────────────
 
-const API = "http://localhost:8080/api";
+const API = "/api";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, {
