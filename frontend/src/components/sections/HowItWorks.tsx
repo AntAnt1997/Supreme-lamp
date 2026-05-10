@@ -1,21 +1,21 @@
 const steps = [
   {
     step: "01",
-    title: "Create Your Profile",
+    title: "Connect Data, Keys, and Alerts",
     description:
-      "Sign up and complete your medical profile including health history, current medications, and preferences.",
+      "Configure your database, RPC provider, AI credentials, messaging channels, and initial trade limits before any automation starts.",
   },
   {
     step: "02",
-    title: "Connect with AI Workers",
+    title: "Run the Worker Loop",
     description:
-      "Our AI medical workers are instantly assigned to your case, available around the clock for your needs.",
+      "Workers watch tracked wallets, research markets, score setups, and queue trades while the API layer exposes controls and telemetry.",
   },
   {
     step: "03",
-    title: "Get Continuous Care",
+    title: "Approve, Execute, and Monitor",
     description:
-      "Receive ongoing support, monitoring, and guidance from your dedicated AI medical team 24/7.",
+      "Safety rails validate every action, real-time notifications surface key events, and PnL plus risk metrics stay visible at all times.",
   },
 ];
 
@@ -26,7 +26,7 @@ export default function HowItWorks() {
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">How It Works</h2>
           <p className="text-gray-400 max-w-xl mx-auto text-lg">
-            Get started in minutes and have your AI health team working for you immediately.
+            Start in manual approval mode, validate each layer, then scale into a continuously running production workflow.
           </p>
         </div>
 

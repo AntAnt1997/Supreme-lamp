@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { CandlestickChart } from "lucide-react";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -6,15 +6,15 @@ export default function Footer() {
   const cols = [
     {
       heading: "Product",
-      links: ["Features", "Pricing", "Security", "Changelog"],
+      links: ["Components", "Deployment", "Risk Controls", "API"],
     },
     {
-      heading: "Company",
-      links: ["About", "Blog", "Careers", "Press"],
+      heading: "Operations",
+      links: ["Runbooks", "Alerts", "Metrics", "Incident Log"],
     },
     {
       heading: "Legal",
-      links: ["Privacy Policy", "Terms of Service", "HIPAA Compliance", "Cookie Policy"],
+      links: ["Privacy Policy", "Terms of Service", "Risk Disclosure", "Cookie Policy"],
     },
   ];
 
@@ -26,12 +26,12 @@ export default function Footer() {
           <div className="col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-blue-600 rounded-lg p-1.5">
-                <Brain className="h-5 w-5 text-white" />
+                <CandlestickChart className="h-5 w-5 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">MediAI</span>
+              <span className="text-white font-bold text-lg">Supreme Lamp</span>
             </div>
             <p className="text-sm leading-relaxed">
-              AI-powered medical workers available 24/7 to support your health journey.
+              AI-powered trading operations with continuous monitoring, execution controls, and human-in-the-loop safety.
             </p>
           </div>
 
@@ -55,10 +55,10 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10">
           <p className="text-xs text-center text-gray-500">
-            &copy; {year} MediAI. All rights reserved.
+            &copy; {year} Supreme Lamp. All rights reserved.
           </p>
           <p className="text-xs text-center text-gray-600 mt-2 max-w-2xl mx-auto">
-            ⚠️ <strong>Medical Disclaimer:</strong> MediAI is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+            ⚠️ <strong>Risk Disclaimer:</strong> Automated trading carries significant financial risk. Always validate configuration, start with small position sizes, and keep human oversight enabled before increasing automation.
           </p>
         </div>
       </div>

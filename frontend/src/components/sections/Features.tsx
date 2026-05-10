@@ -1,10 +1,10 @@
 import {
-  Brain,
-  Calendar,
+  Bot,
+  Database,
   Bell,
-  FileText,
-  MessageSquare,
-  Activity,
+  ArrowLeftRight,
+  ShieldCheck,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,50 +18,50 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    icon: Brain,
-    title: "AI Symptom Analysis",
+    icon: Bot,
+    title: "Autonomous Worker Mesh",
     description:
-      "Advanced AI analyzes your symptoms and provides instant preliminary assessments based on medical knowledge.",
+      "Run signal monitoring, price analysis, risk reviews, execution, research, and arbitrage scans on staggered schedules around the clock.",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
   },
   {
-    icon: Calendar,
-    title: "Smart Scheduling",
+    icon: Database,
+    title: "PostgreSQL Trading Ledger",
     description:
-      "Automatically schedule appointments with the right specialists based on your medical needs.",
+      "Persist wallets, signals, trades, open positions, daily metrics, and AI insights in one schema ready for Supabase or RDS.",
     color: "text-purple-400",
     bg: "bg-purple-500/10",
   },
   {
     icon: Bell,
-    title: "Medication Reminders",
+    title: "Priority Notifications",
     description:
-      "Never miss a dose with intelligent medication tracking and personalized reminder systems.",
+      "Route low, medium, high, and critical events to Telegram, Discord, email, SMS, and daily operator summaries.",
     color: "text-green-400",
     bg: "bg-green-500/10",
   },
   {
-    icon: FileText,
-    title: "Medical Records",
+    icon: ArrowLeftRight,
+    title: "Uniswap V3 Execution",
     description:
-      "Securely store, organize and share your medical records with healthcare providers instantly.",
+      "Simulate trades, find the best fee tier, manage approvals, optimize gas, and enforce slippage limits before every order.",
     color: "text-orange-400",
     bg: "bg-orange-500/10",
   },
   {
-    icon: MessageSquare,
-    title: "24/7 Health Chat",
+    icon: ShieldCheck,
+    title: "Capital Protection Rails",
     description:
-      "Chat with our AI medical workers any time of day or night for immediate health guidance.",
+      "Enforce daily loss caps, per-trade limits, concentration guards, gas ceilings, kill switches, and manual review workflows.",
     color: "text-pink-400",
     bg: "bg-pink-500/10",
   },
   {
-    icon: Activity,
-    title: "Health Monitoring",
+    icon: Workflow,
+    title: "Operator API Server",
     description:
-      "Continuous monitoring of your health metrics with proactive alerts and recommendations.",
+      "Control workers, inspect trades and positions, manage safety settings, and expose analytics through a RESTful backend.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
   },
@@ -69,14 +69,14 @@ const features: Feature[] = [
 
 export default function Features() {
   return (
-    <section id="services" className="bg-gray-900 py-24">
+    <section id="components" className="bg-gray-900 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Everything You Need for Better Health
+            The Five Core Components, Plus Operations
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto text-lg">
-            Our AI medical workers handle the routine so your human doctors can focus on what matters most.
+            Everything needed to run a monitored AI trading operation from signal discovery through execution, risk, and reporting.
           </p>
         </div>
 
