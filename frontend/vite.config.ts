@@ -4,7 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 // https://vite.dev/config/
-const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1]
+const repositoryName = process.env.GITHUB_REPOSITORY
+  ?.split('/')
+  .filter(Boolean)
+  .at(-1)
 
 export default defineConfig({
   base:
