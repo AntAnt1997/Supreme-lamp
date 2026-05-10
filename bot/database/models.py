@@ -156,3 +156,108 @@ class AppSetting(Base):
 
     def __repr__(self):
         return f"<AppSetting {self.key}={self.value[:50]}>"
+
+
+# ── Wallet Tracking Models ────────────────────────────────────────────────────
+
+
+class TrackedWallet(Base):
+    """An externally-tracked blockchain wallet address."""
+
+    __tablename__ = "tracked_wallets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    address = Column(String(255), nullable=False, unique=True, index=True)
+    label = Column(String(100), nullable=True)
+    chain = Column(String(20), nullable=False, default="ethereum")  # ethereum/polygon/arbitrum/base/optimism/bsc
+    # Optional Polymarket metadata
+    polymarket_volume = Column(Float, nullable=True)
+    polymarket_win_rate = Column(Float, nullable=True)
+    polymarket_pnl = Column(Float, nullable=True)
+    # Sync metadata
+    last_synced_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    tokens = relationship("WalletToken", back_populates="wallet", cascade="all, delete-orphan")
+    transactions = relationship("WalletTransaction", back_populates="wallet", cascade="all, delete-orphan")
+    snapshots = relationship("WalletSnapshot", back_populates="wallet", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<TrackedWallet {self.label or self.address[:10]}...>"
+
+
+class WalletToken(Base):
+    """Current token holdings for a tracked wallet."""
+
+    __tablename__ = "wallet_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    wallet_id = Column(Integer, ForeignKey("tracked_wallets.id", ondelete="CASCADE"), nullable=False)
+    token_symbol = Column(String(20), nullable=False)
+    token_name = Column(String(100), nullable=True)
+    token_address = Column(String(255), nullable=True)  # contract address (None for native)
+    balance = Column(Float, nullable=False, default=0.0)
+    balance_usd = Column(Float, nullable=True)
+    price_usd = Column(Float, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    wallet = relationship("TrackedWallet", back_populates="tokens")
+
+    __table_args__ = (
+        Index("ix_wallet_tokens_wallet_symbol", "wallet_id", "token_symbol"),
+    )
+
+    def __repr__(self):
+        return f"<WalletToken {self.token_symbol} bal={self.balance}>"
+
+
+class WalletTransaction(Base):
+    """Transaction history for a tracked wallet."""
+
+    __tablename__ = "wallet_transactions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    wallet_id = Column(Integer, ForeignKey("tracked_wallets.id", ondelete="CASCADE"), nullable=False)
+    tx_hash = Column(String(255), nullable=False, index=True)
+    block_number = Column(Integer, nullable=True)
+    tx_type = Column(String(20), nullable=True)  # "send", "receive", "swap", "contract"
+    from_address = Column(String(255), nullable=True)
+    to_address = Column(String(255), nullable=True)
+    asset = Column(String(20), nullable=True)
+    value = Column(Float, nullable=True)
+    value_usd = Column(Float, nullable=True)
+    gas_used = Column(Float, nullable=True)
+    gas_price_gwei = Column(Float, nullable=True)
+    fee_usd = Column(Float, nullable=True)
+    status = Column(String(20), nullable=True)  # "success" / "failed"
+    timestamp = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    wallet = relationship("TrackedWallet", back_populates="transactions")
+
+    __table_args__ = (
+        Index("ix_wallet_tx_wallet_ts", "wallet_id", "timestamp"),
+    )
+
+    def __repr__(self):
+        return f"<WalletTransaction {self.tx_hash[:10]}... {self.asset}>"
+
+
+class WalletSnapshot(Base):
+    """Periodic total-value snapshot for portfolio history."""
+
+    __tablename__ = "wallet_snapshots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    wallet_id = Column(Integer, ForeignKey("tracked_wallets.id", ondelete="CASCADE"), nullable=False)
+    total_value_usd = Column(Float, nullable=False, default=0.0)
+    native_balance = Column(Float, nullable=True)
+    native_balance_usd = Column(Float, nullable=True)
+    token_count = Column(Integer, default=0)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    wallet = relationship("TrackedWallet", back_populates="snapshots")
+
+    def __repr__(self):
+        return f"<WalletSnapshot wallet={self.wallet_id} usd={self.total_value_usd:.2f}>"
