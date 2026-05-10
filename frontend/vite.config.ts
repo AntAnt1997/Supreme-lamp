@@ -4,15 +4,15 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 // https://vite.dev/config/
-const repositoryName = process.env.GITHUB_REPOSITORY
+const repoName = process.env.GITHUB_REPOSITORY
   ?.split('/')
   .filter(Boolean)
   .at(-1)
 
 export default defineConfig({
   base:
-    process.env.GITHUB_ACTIONS && repositoryName
-      ? `/${repositoryName}/`
+    process.env.GITHUB_ACTIONS && repoName
+      ? `/${repoName}/`
       : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
