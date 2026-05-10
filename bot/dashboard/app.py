@@ -8,6 +8,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from bot.wallet.service import WalletService
+from bot.wallet.blockchain import BlockchainService, CHAIN_CONFIG
+
 logger = logging.getLogger(__name__)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -274,5 +277,126 @@ def create_dashboard(
             "ai": ai_trader,
         }
         return strategies.get(name)
+
+    # ── Wallet Tracking API ───────────────────────────────────────────────────
+
+    wallet_svc = WalletService(blockchain=BlockchainService())
+
+    @app.get("/api/wallets/portfolio/summary")
+    async def wallet_portfolio_summary():
+        try:
+            return wallet_svc.get_portfolio_summary()
+        except Exception:
+            logger.exception("Failed to get portfolio summary")
+            raise HTTPException(500, "Failed to retrieve portfolio summary")
+
+    @app.get("/api/wallets/chains/supported")
+    async def supported_chains():
+        return [
+            {"id": chain_id, "native_symbol": cfg["native_symbol"], "name": cfg["native_name"]}
+            for chain_id, cfg in CHAIN_CONFIG.items()
+        ]
+
+    @app.get("/api/wallets")
+    async def list_wallets():
+        try:
+            return wallet_svc.list_wallets()
+        except Exception:
+            logger.exception("Failed to list wallets")
+            raise HTTPException(500, "Failed to retrieve wallets")
+
+    @app.post("/api/wallets")
+    async def add_wallet(request: Request):
+        try:
+            data = await request.json()
+            address = data.get("address", "").strip()
+            if not address:
+                raise HTTPException(400, "address is required")
+            wallet = wallet_svc.add_wallet(
+                address=address,
+                chain=data.get("chain", "ethereum"),
+                label=data.get("label"),
+            )
+            return wallet
+        except HTTPException:
+            raise
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        except Exception:
+            logger.exception("Failed to add wallet")
+            raise HTTPException(500, "Failed to add wallet")
+
+    @app.get("/api/wallets/{wallet_id}")
+    async def get_wallet(wallet_id: int):
+        wallet = wallet_svc.get_wallet(wallet_id)
+        if not wallet:
+            raise HTTPException(404, "Wallet not found")
+        return wallet
+
+    @app.patch("/api/wallets/{wallet_id}")
+    async def update_wallet(wallet_id: int, request: Request):
+        try:
+            data = await request.json()
+            return wallet_svc.update_wallet(wallet_id, **data)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        except Exception:
+            logger.exception("Failed to update wallet %d", wallet_id)
+            raise HTTPException(500, "Failed to update wallet")
+
+    @app.delete("/api/wallets/{wallet_id}")
+    async def delete_wallet(wallet_id: int):
+        try:
+            wallet_svc.delete_wallet(wallet_id)
+            return {"status": "deleted"}
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        except Exception:
+            logger.exception("Failed to delete wallet %d", wallet_id)
+            raise HTTPException(500, "Failed to delete wallet")
+
+    @app.post("/api/wallets/{wallet_id}/sync")
+    async def sync_wallet(wallet_id: int):
+        try:
+            return wallet_svc.sync_wallet(wallet_id)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        except Exception:
+            logger.exception("Failed to sync wallet %d", wallet_id)
+            raise HTTPException(500, "Blockchain sync failed")
+
+    @app.get("/api/wallets/{wallet_id}/tokens")
+    async def wallet_tokens(wallet_id: int):
+        try:
+            return wallet_svc.get_wallet_tokens(wallet_id)
+        except Exception:
+            logger.exception("Failed to get tokens for wallet %d", wallet_id)
+            raise HTTPException(500, "Failed to retrieve token holdings")
+
+    @app.get("/api/wallets/{wallet_id}/transactions")
+    async def wallet_transactions(wallet_id: int, limit: int = 50, offset: int = 0):
+        try:
+            return wallet_svc.get_wallet_transactions(wallet_id, limit=limit, offset=offset)
+        except Exception:
+            logger.exception("Failed to get transactions for wallet %d", wallet_id)
+            raise HTTPException(500, "Failed to retrieve transactions")
+
+    @app.get("/api/wallets/{wallet_id}/history")
+    async def wallet_history(wallet_id: int, days: int = 30):
+        try:
+            return wallet_svc.get_wallet_history(wallet_id, days=days)
+        except Exception:
+            logger.exception("Failed to get history for wallet %d", wallet_id)
+            raise HTTPException(500, "Failed to retrieve portfolio history")
+
+    @app.post("/api/polymarket/import")
+    async def polymarket_import(request: Request):
+        try:
+            data = await request.json()
+            wallets_data = data.get("tracked_wallets", data if isinstance(data, list) else [])
+            return wallet_svc.import_polymarket_wallets(wallets_data)
+        except Exception:
+            logger.exception("Failed to import Polymarket wallets")
+            raise HTTPException(500, "Failed to import wallets")
 
     return app

@@ -1,0 +1,34 @@
+{
+  "tracked_wallets": [
+    {
+      "address": "0x00b13B372D177d22Fd3D298B69a1e9f307924EDa",
+      "label": "Skilled Trader #1",
+      "chain": "ethereum",
+      "performance": {
+        "total_volume": 245000,
+        "win_rate": 72.3,
+        "profit_loss": 58000
+      }
+    },
+    {
+      "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+      "label": "Polymarket Whale",
+      "chain": "polygon",
+      "performance": {
+        "total_volume": 1200000,
+        "win_rate": 68.1,
+        "profit_loss": 320000
+      }
+    },
+    {
+      "address": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",
+      "label": "Sharp Bettor",
+      "chain": "ethereum",
+      "performance": {
+        "total_volume": 87500,
+        "win_rate": 61.4,
+        "profit_loss": 14200
+      }
+    }
+  ]
+}
