@@ -13,64 +13,64 @@ interface Plan {
 
 const plans: Plan[] = [
   {
-    name: "Basic",
-    price: "$9",
-    period: "/month",
-    description: "Perfect for individuals managing their health",
+    name: "Pilot",
+    price: "$15",
+    period: "/month+",
+    description: "Small-budget launch with manual approvals enabled",
     features: [
-      "AI symptom checker",
-      "Medication reminders",
-      "Basic health monitoring",
-      "Email support",
-      "1 user profile",
+      "Supabase free tier database",
+      "Railway or Render starter worker",
+      "Telegram alerts only",
+      "$10-$50 test trades",
+      "0.1 ETH starter capital",
     ],
-    cta: "Get Started",
+    cta: "Start Safely",
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$29",
-    period: "/month",
-    description: "Ideal for families and chronic condition management",
+    name: "Production",
+    price: "$75",
+    period: "/month+",
+    description: "Balanced deployment for continuous monitoring and execution",
     features: [
-      "Everything in Basic",
-      "24/7 AI health chat",
-      "Smart appointment scheduling",
-      "Medical records storage",
-      "Up to 5 user profiles",
-      "Priority support",
+      "All 5 trading components online",
+      "Telegram, Discord, and email routing",
+      "Managed PostgreSQL + analytics",
+      "Real-time PnL and risk reporting",
+      "Manual approvals with escalation",
+      "Daily operator summaries",
     ],
-    cta: "Start Free Trial",
+    cta: "Use This Blueprint",
     highlighted: true,
   },
   {
-    name: "Enterprise",
-    price: "$99",
-    period: "/month",
-    description: "For healthcare providers and organizations",
+    name: "Scale",
+    price: "$200",
+    period: "/month+",
+    description: "Higher-volume setup with multi-channel paging and tighter ops controls",
     features: [
-      "Everything in Pro",
-      "Unlimited user profiles",
-      "Custom AI workflows",
-      "EHR integration",
-      "Dedicated account manager",
-      "HIPAA compliance tools",
+      "Dedicated cloud compute",
+      "SMS escalation via Twilio",
+      "Multi-chain execution routing",
+      "Expanded wallet watchlists",
+      "Advanced audit retention",
+      "Ops-ready alert coverage",
     ],
-    cta: "Contact Sales",
+    cta: "Plan Capacity",
     highlighted: false,
   },
 ];
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="bg-gray-900 py-24">
+    <section id="deployment" className="bg-gray-900 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Simple, Transparent Pricing
+            Deployment Blueprint
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto text-lg">
-            No hidden fees. Cancel anytime. Start free with our 14-day trial.
+            Start small, keep approvals on, and scale the infrastructure only after the first week of monitored trading.
           </p>
         </div>
 

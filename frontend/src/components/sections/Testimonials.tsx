@@ -10,25 +10,25 @@ interface Testimonial {
 
 const testimonials: Testimonial[] = [
   {
-    name: "Sarah Johnson",
-    role: "Patient",
-    avatar: "SJ",
+    name: "Marcus Lee",
+    role: "Quant Operator",
+    avatar: "ML",
     rating: 5,
-    text: "MediAI has completely transformed how I manage my chronic condition. Having 24/7 access to medical guidance gives me incredible peace of mind.",
+    text: "The worker split makes it easy to keep signal discovery, execution, and monitoring isolated while still seeing every trade in one place.",
   },
   {
-    name: "Dr. Michael Chen",
-    role: "Healthcare Provider",
-    avatar: "MC",
+    name: "Priya Shah",
+    role: "DevOps Lead",
+    avatar: "PS",
     rating: 5,
-    text: "As a physician, I recommend MediAI to my patients for between-visit support. The AI workers are accurate and always know when to escalate to human care.",
+    text: "Manual approvals, alerts, and daily summaries gave our team enough confidence to start small and expand automation safely.",
   },
   {
-    name: "Emily Rodriguez",
-    role: "Caregiver",
-    avatar: "ER",
+    name: "Jonah Brooks",
+    role: "Research Trader",
+    avatar: "JB",
     rating: 5,
-    text: "Managing my elderly mother's medications and appointments used to be overwhelming. MediAI handles everything seamlessly.",
+    text: "I like that the deployment story is practical: database, cloud worker, notifications, and guardrails instead of hype with no controls.",
   },
 ];
 
@@ -38,10 +38,10 @@ export default function Testimonials() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Trusted by Thousands
+            Built for Hands-On Operators
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto text-lg">
-            See why patients, caregivers, and healthcare providers love MediAI.
+            Teams use the stack to launch cautiously, monitor closely, and keep human oversight in the loop.
           </p>
         </div>
 

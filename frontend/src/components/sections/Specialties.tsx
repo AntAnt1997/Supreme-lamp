@@ -5,26 +5,26 @@ interface Specialty {
 }
 
 const specialties: Specialty[] = [
-  { name: "General Medicine", icon: "🏥", count: "500+ conditions" },
-  { name: "Mental Health", icon: "🧠", count: "200+ conditions" },
-  { name: "Cardiology", icon: "❤️", count: "150+ conditions" },
-  { name: "Pediatrics", icon: "👶", count: "300+ conditions" },
-  { name: "Dermatology", icon: "🔬", count: "400+ conditions" },
-  { name: "Nutrition", icon: "🥗", count: "100+ plans" },
-  { name: "Orthopedics", icon: "🦴", count: "200+ conditions" },
-  { name: "Neurology", icon: "⚡", count: "180+ conditions" },
+  { name: "Ethereum", icon: "⟠", count: "Uniswap mainnet" },
+  { name: "Polygon", icon: "🟣", count: "Low-cost routing" },
+  { name: "Arbitrum", icon: "🔵", count: "Fast execution" },
+  { name: "Optimism", icon: "🔴", count: "Rollup support" },
+  { name: "Telegram", icon: "✈️", count: "Real-time actions" },
+  { name: "Discord", icon: "💬", count: "Rich embeds" },
+  { name: "Email + SMS", icon: "📨", count: "Critical paging" },
+  { name: "PostgreSQL", icon: "🗄️", count: "Signals + PnL" },
 ];
 
 export default function Specialties() {
   return (
-    <section id="specialties" className="bg-gray-900 py-24">
+    <section id="integrations" className="bg-gray-900 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Medical Specialties Covered
+            Integrations and Runtime Targets
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto text-lg">
-            From everyday health questions to complex chronic conditions — our AI covers it all.
+            Deploy on the chains, notification channels, and data services that keep a trading desk responsive.
           </p>
         </div>
 

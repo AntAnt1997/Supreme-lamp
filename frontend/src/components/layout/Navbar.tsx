@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Menu, X, Brain } from "lucide-react";
+import { Menu, X, CandlestickChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const links = [
-    { label: "Services", href: "#services" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Specialties", href: "#specialties" },
-    { label: "Pricing", href: "#pricing" },
+    { label: "Components", href: "#components" },
+    { label: "Workflow", href: "#how-it-works" },
+    { label: "Integrations", href: "#integrations" },
+    { label: "Deployment", href: "#deployment" },
     { label: "FAQ", href: "#faq" },
   ];
 
@@ -20,9 +20,9 @@ export default function Navbar() {
           {/* Logo */}
           <a href="#" className="flex items-center gap-2">
             <div className="bg-blue-600 rounded-lg p-1.5">
-              <Brain className="h-5 w-5 text-white" />
+              <CandlestickChart className="h-5 w-5 text-white" />
             </div>
-            <span className="text-white font-bold text-lg">MediAI</span>
+            <span className="text-white font-bold text-lg">Supreme Lamp</span>
           </a>
 
           {/* Desktop nav */}
@@ -41,9 +41,9 @@ export default function Navbar() {
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-white/10">
-              Sign In
+              View Docs
             </Button>
-            <Button size="sm">Get Started Free</Button>
+            <Button size="sm">Deploy Stack</Button>
           </div>
 
           {/* Mobile toggle */}
@@ -72,9 +72,9 @@ export default function Navbar() {
           ))}
           <div className="pt-3 flex flex-col gap-2">
             <Button variant="ghost" size="sm" className="w-full text-gray-300 hover:text-white hover:bg-white/10 justify-center">
-              Sign In
+              View Docs
             </Button>
-            <Button size="sm" className="w-full">Get Started Free</Button>
+            <Button size="sm" className="w-full">Deploy Stack</Button>
           </div>
         </div>
       )}

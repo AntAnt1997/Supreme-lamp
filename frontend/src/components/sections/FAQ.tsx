@@ -12,29 +12,29 @@ interface FAQ {
 
 const faqs: FAQ[] = [
   {
-    question: "Is MediAI a replacement for my doctor?",
+    question: "Is this safe to run fully unattended on day one?",
     answer:
-      "No. MediAI is designed to complement your existing healthcare, not replace it. Our AI workers provide guidance, monitoring, and support but always recommend consulting a licensed physician for diagnosis and treatment.",
+      "No. The recommended rollout is to begin with manual approval enabled, small trade sizes, and close monitoring until the system proves stable in your environment.",
   },
   {
-    question: "How is my medical data protected?",
+    question: "What infrastructure does the stack expect?",
     answer:
-      "We take data security extremely seriously. All data is encrypted at rest and in transit, we are fully HIPAA compliant, and we never sell your personal health information to third parties.",
+      "The architecture is built around PostgreSQL, a cloud worker host such as Railway or Render, EVM RPC access, and notification providers like Telegram, Discord, email, and optional SMS.",
   },
   {
-    question: "What happens in a medical emergency?",
+    question: "Which safety rails are included before a trade is sent?",
     answer:
-      "In any emergency situation, our AI workers will immediately direct you to call 911 or your local emergency services. MediAI is not designed for emergency medical situations.",
+      "The system applies per-trade limits, daily loss caps, concentration checks, gas ceilings, slippage protection, kill switches, and optional manual approvals before execution.",
   },
   {
-    question: "Can I use MediAI for my children?",
+    question: "What does the notification system cover?",
     answer:
-      "Yes, our Pro and Enterprise plans support multiple user profiles including children. Parents or guardians manage child profiles and all pediatric guidance is age-appropriate.",
+      "It supports priority-based routing to Telegram, Discord, email, SMS, plus daily summaries so operators can respond differently to informational events versus critical incidents.",
   },
   {
-    question: "How accurate is the AI symptom checker?",
+    question: "How should I start funding and sizing trades?",
     answer:
-      "Our AI is trained on millions of medical cases and peer-reviewed literature. However, it provides informational guidance only and accuracy varies. Always consult a healthcare professional for diagnosis.",
+      "Start with a small balance, test $10-$50 trades, monitor the first week closely, and only increase limits once the execution path, alerts, and safety controls have been verified.",
   },
 ];
 
