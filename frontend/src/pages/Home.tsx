@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 type Task = {
@@ -11,6 +11,7 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [input, setInput] = useState("");
   const [showCompleted, setShowCompleted] = useState(true);
+  const nextTaskId = useRef(1);
 
   const visibleTasks = useMemo(() => {
     if (showCompleted) return tasks;
@@ -23,9 +24,11 @@ export default function Home() {
     event.preventDefault();
     const title = input.trim();
     if (!title) return;
+    const taskId = nextTaskId.current;
+    nextTaskId.current += 1;
 
     setTasks((current) => [
-      { id: Date.now(), title, done: false },
+      { id: taskId, title, done: false },
       ...current,
     ]);
     setInput("");
