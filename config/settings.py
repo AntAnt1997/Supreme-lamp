@@ -131,13 +131,20 @@ class Settings:
     copy_trading: CopyTradingConfig = field(default_factory=CopyTradingConfig)
     dashboard: DashboardConfig = field(default_factory=DashboardConfig)
 
+    def __post_init__(self):
+        self.trading_mode = self.trading_mode.strip().lower()
+        if self.trading_mode not in {"paper", "live"}:
+            raise ValueError(
+                f"TRADING_MODE must be 'paper' or 'live', got '{self.trading_mode}'"
+            )
+
     @property
     def is_paper_mode(self) -> bool:
-        return self.trading_mode.lower() == "paper"
+        return self.trading_mode == "paper"
 
     @property
     def is_live_mode(self) -> bool:
-        return self.trading_mode.lower() == "live"
+        return self.trading_mode == "live"
 
 
 # Global settings instance
