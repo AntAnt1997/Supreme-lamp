@@ -34,7 +34,7 @@ cp .env.example .env
 Edit `.env` with your settings:
 
 - **Required for paper trading**: No API keys needed! Works out of the box.
-- **Required for live trading**:  `cdc_070e4167b9fad1df31c0d970acbe 
+- **Required for live trading**: `BINANCE_API_KEY` and `BINANCE_API_SECRET`
 - **Optional**: `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for notifications
 
 ### 3. Run
